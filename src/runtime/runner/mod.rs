@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 use parking_lot::RwLock;
 
 use crate::gdb_marker;
@@ -25,10 +24,7 @@ use crate::runtime::manager::Manager;
 use crate::runtime::schedular::stack::Stack;
 use crate::{
     error::HiveError,
-    jit::{
-        opcode::Opcode,
-        x86_64::jit_x86_64,
-    },
+    jit::{opcode::Opcode, x86_64::jit_x86_64},
     runtime::{
         load_exec::{ExecPageManager, FunctionId},
         schedular::{

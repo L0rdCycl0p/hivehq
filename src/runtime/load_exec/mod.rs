@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 use std::{
     io, ptr,
     sync::{Arc, Weak},
@@ -145,7 +144,7 @@ impl ExecPageManager {
         }
         Self {
             pages: Vec::new(),
-            functions
+            functions,
         }
     }
     /// Gets a function if it is already loaded into memory via `mmap`
@@ -274,7 +273,7 @@ impl ExecPageManager {
             let mut c = id.0 as usize - self.functions.len(); // [0, 1, 2, 3, 4, 5, 6, 7, 8] 9
             while c != 0 {
                 self.functions.push(None);
-                c-=1;
+                c -= 1;
             }
             self.functions.push(None);
         } else {

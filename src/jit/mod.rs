@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 pub mod opcode;
 pub mod parser;
 #[cfg(feature = "x86_64")]

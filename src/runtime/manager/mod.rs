@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 use std::{
     io::{Read, Seek},
     sync::Arc,
@@ -25,10 +24,7 @@ use parking_lot::RwLock;
 use crate::{
     error::HiveError,
     parser::LoadedFile,
-    runtime::{
-        load_exec::ExecPageManager,
-        schedular::ProcessRegistryEntry,
-    },
+    runtime::{load_exec::ExecPageManager, schedular::ProcessRegistryEntry},
 };
 /// The schedulars shares this struct
 pub struct Manager<S: Read + Seek> {

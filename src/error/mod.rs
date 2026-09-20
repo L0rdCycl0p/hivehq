@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 use std::io;
 
 use crate::{jit::parser::ParseError, parser::errors::LoadError, runtime::load_exec::FunctionId};

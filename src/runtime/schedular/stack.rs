@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 use std::alloc::{Layout, alloc, dealloc};
 
 use crate::runtime::schedular::{api::ProcessRequest, context::HiveContext};
@@ -145,23 +144,25 @@ impl Stack {
         process_request_ptr: *mut ProcessRequest,
         schedular_context_ptr: *mut HiveContext,
         process_context_ptr: *mut HiveContext,
-    ) { unsafe {
-        let stack = self.allocate(pid, size).expect("HIVE stack exhausted");
+    ) {
+        unsafe {
+            let stack = self.allocate(pid, size).expect("HIVE stack exhausted");
 
-        let rsp = (stack.end as usize - 24) & !15;
+            let rsp = (stack.end as usize - 24) & !15;
 
-        // [rsp + 0]  = request pointer
-        // [rsp + 8]  = scheduler context pointer
-        // [rsp + 16] = process context pointer
+            // [rsp + 0]  = request pointer
+            // [rsp + 8]  = scheduler context pointer
+            // [rsp + 16] = process context pointer
 
-        (*process_context_ptr).rsp = rsp as u64;
+            (*process_context_ptr).rsp = rsp as u64;
 
-        *(rsp as *mut u64) = process_request_ptr as u64;
+            *(rsp as *mut u64) = process_request_ptr as u64;
 
-        *((rsp + 8) as *mut u64) = schedular_context_ptr as u64;
+            *((rsp + 8) as *mut u64) = schedular_context_ptr as u64;
 
-        *((rsp + 16) as *mut u64) = process_context_ptr as u64;
-    }}
+            *((rsp + 16) as *mut u64) = process_context_ptr as u64;
+        }
+    }
 }
 
 impl Drop for Stack {

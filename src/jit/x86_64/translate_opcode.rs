@@ -14,15 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 use crate::jit::{
-        opcode::{MemoryOperand, Opcode, Operand, Register, ShiftAmount},
-        x86_64::{
-            build_instruction::{InstructionEncoding, build_instruction},
-            gen_context_switch::ContextSwitchPatch,
-            gen_sched_req::gen_sched_req,
-        },
-    };
+    opcode::{MemoryOperand, Opcode, Operand, Register, ShiftAmount},
+    x86_64::{
+        build_instruction::{InstructionEncoding, build_instruction},
+        gen_context_switch::ContextSwitchPatch,
+        gen_sched_req::gen_sched_req,
+    },
+};
 
 pub const fn encode_register(register: &Register) -> u8 {
     match register {

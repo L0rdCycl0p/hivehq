@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 use chrono::Utc;
 use std::{
     collections::VecDeque,
@@ -89,133 +88,137 @@ impl<S: Read + Seek> Schedular<S> {
     }
 }
 impl<S: Read + Seek> Schedular<S> {
-    pub unsafe fn schedular_run(&mut self) { unsafe {
-        gdb_marker!(sched_run);
+    pub unsafe fn schedular_run(&mut self) {
+        unsafe {
+            gdb_marker!(sched_run);
 
-        loop {
-            if self.process_registry.is_empty() {
-                println!("All process done");
-                break;
-            }
-
-            for i in 0..self.process_registry.len() {
-                let process = self.process_registry.get_unchecked_mut(i);
-
-                match process.state {
-                    ProcessState::Running => {}
-
-                    ProcessState::WaitingRecv { dst } => {
-                        let Some(msg) = process.mailbox.pop_front() else {
-                            continue;
-                        };
-
-                        *(dst as *mut *mut c_void) = msg as *mut c_void;
-
-                        process.state = ProcessState::Running;
-                    }
-
-                    ProcessState::WaitingFD { .. } => {
-                        todo!();
-                    }
-
-                    ProcessState::Sleep { end } if Utc::now().timestamp_micros() >= end => {
-                        process.state = ProcessState::Running;
-                    }
-
-                    ProcessState::Sleep { .. } => {
-                        continue;
-                    }
+            loop {
+                if self.process_registry.is_empty() {
+                    println!("All process done");
+                    break;
                 }
 
-                gdb_marker!(sched_process_context_swap);
+                for i in 0..self.process_registry.len() {
+                    let process = self.process_registry.get_unchecked_mut(i);
 
-                swapcontext(&mut self.context, &process.process.context);
+                    match process.state {
+                        ProcessState::Running => {}
 
-                handle_request(i, self);
+                        ProcessState::WaitingRecv { dst } => {
+                            let Some(msg) = process.mailbox.pop_front() else {
+                                continue;
+                            };
+
+                            *(dst as *mut *mut c_void) = msg as *mut c_void;
+
+                            process.state = ProcessState::Running;
+                        }
+
+                        ProcessState::WaitingFD { .. } => {
+                            todo!();
+                        }
+
+                        ProcessState::Sleep { end } if Utc::now().timestamp_micros() >= end => {
+                            process.state = ProcessState::Running;
+                        }
+
+                        ProcessState::Sleep { .. } => {
+                            continue;
+                        }
+                    }
+
+                    gdb_marker!(sched_process_context_swap);
+
+                    swapcontext(&mut self.context, &process.process.context);
+
+                    handle_request(i, self);
+                }
             }
         }
-    }}
+    }
     pub unsafe fn new_process(
         &mut self,
         pid: u32,
         function_id: FunctionId,
-    ) -> Result<(), HiveError> { unsafe {
-        let (code_offset, code_size, frame_size) = {
-            let loaded_file = self.manager.loaded_file.read();
+    ) -> Result<(), HiveError> {
+        unsafe {
+            let (code_offset, code_size, frame_size) = {
+                let loaded_file = self.manager.loaded_file.read();
 
-            let function = &loaded_file.functions[function_id.0 as usize];
+                let function = &loaded_file.functions[function_id.0 as usize];
 
-            (
-                function.code_offset,
-                function.code_size,
-                function.frame_size,
-            )
-        };
+                (
+                    function.code_offset,
+                    function.code_size,
+                    function.frame_size,
+                )
+            };
 
-        let loaded_func = {
-            let mut exec_page_manager = self.manager.exec_page_manager.write();
+            let loaded_func = {
+                let mut exec_page_manager = self.manager.exec_page_manager.write();
 
-            if exec_page_manager.func_exists(function_id) {
-                exec_page_manager.get_func(function_id)?
-            } else {
-                let mut loaded_file = self.manager.loaded_file.write();
+                if exec_page_manager.func_exists(function_id) {
+                    exec_page_manager.get_func(function_id)?
+                } else {
+                    let mut loaded_file = self.manager.loaded_file.write();
 
-                let source = loaded_file
-                    .source
-                    .as_mut()
-                    .ok_or(HiveError::NoSourceAvailable)?;
+                    let source = loaded_file
+                        .source
+                        .as_mut()
+                        .ok_or(HiveError::NoSourceAvailable)?;
 
-                source.seek(SeekFrom::Start(code_offset))?;
+                    source.seek(SeekFrom::Start(code_offset))?;
 
-                let mut buf = vec![0; code_size as usize];
+                    let mut buf = vec![0; code_size as usize];
 
-                source.read_exact(&mut buf)?;
+                    source.read_exact(&mut buf)?;
 
-                let code = jit_function(buf.into_boxed_slice());
+                    let code = jit_function(buf.into_boxed_slice());
 
-                exec_page_manager.load_func(function_id, code)?
-            }
-        };
+                    exec_page_manager.load_func(function_id, code)?
+                }
+            };
 
-        // ------------------------------------------------------------
-        // Initial CPU context
-        // ------------------------------------------------------------
+            // ------------------------------------------------------------
+            // Initial CPU context
+            // ------------------------------------------------------------
 
-        let mut context = HiveContext::default();
+            let mut context = HiveContext::default();
 
-        context.rip = loaded_func.ptr as u64;
+            context.rip = loaded_func.ptr as u64;
 
-        context.rbx = 5;
-        context.r12 = 12;
+            context.rbx = 5;
+            context.r12 = 12;
 
-        let process = Process {
-            context,
-            request: ProcessRequest {
-                request: ProcessRequestTag::SchedYield,
-                params: [0; 24],
-            },
-        };
+            let process = Process {
+                context,
+                request: ProcessRequest {
+                    request: ProcessRequestTag::SchedYield,
+                    params: [0; 24],
+                },
+            };
 
-        let mut process = ProcessRegistryEntry {
-            pid,
-            stack_frames: Vec::new(),
-            process: Box::new(process),
-            state: ProcessState::Running,
-            mailbox: VecDeque::new(),
-        };
+            let mut process = ProcessRegistryEntry {
+                pid,
+                stack_frames: Vec::new(),
+                process: Box::new(process),
+                state: ProcessState::Running,
+                mailbox: VecDeque::new(),
+            };
 
-        self.stack.new_proc_stack(
-            pid,
-            frame_size as usize,
-            &raw mut process.process.request,
-            &raw mut self.context,
-            &raw mut process.process.context,
-        );
+            self.stack.new_proc_stack(
+                pid,
+                frame_size as usize,
+                &raw mut process.process.request,
+                &raw mut self.context,
+                &raw mut process.process.context,
+            );
 
-        self.process_registry.push(process);
+            self.process_registry.push(process);
 
-        Ok(())
-    }}
+            Ok(())
+        }
+    }
     pub fn call_function(
         &mut self,
         pid: Pid,

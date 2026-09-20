@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! HIVE (Hive Is Very Efficient) — a lightweight native runtime inspired by BEAM, designed to run large numbers of small, isolated processes without a virtual machine.
-
+#![doc = include_str!("../README.md")]
 #[cfg(not(target_os = "linux"))]
 compile_error!(
     "HIVE only supports Linux. \
@@ -32,9 +31,7 @@ compile_error!(
 compile_error!("HIVE currently supports only x86_64 Linux.");
 
 use clap::Parser;
-use hivehq::{
-    cli::Cli, error::HiveError, runtime::runner::run_hive_data_stream,
-};
+use hivehq::{cli::Cli, error::HiveError, runtime::runner::run_hive_data_stream};
 
 fn main() -> Result<(), HiveError> {
     let args = Cli::parse();
