@@ -27,6 +27,8 @@ compile_error!(
     control instead of introducing abstractions for operating systems that HIVE \
     is not designed to support."
 );
+#[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
+compile_error!("HIVE currently supports only x86_64 Linux.");
 //#![warn(missing_docs)]
 pub mod debug;
 pub mod error;

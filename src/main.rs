@@ -14,7 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
+#[cfg(not(target_os = "linux"))]
+compile_error!(
+    "HIVE only supports Linux. \
+    HIVE is intentionally designed as a Linux-only runtime because it directly \
+    relies on Linux system interfaces such as mmap and mprotect, and is primarily \
+    intended for server workloads where Linux is the dominant platform. \
+    Restricting HIVE to Linux allows the runtime to specialize for performance, \
+    reduce platform-specific bugs, avoid unnecessary development and maintenance \
+    effort, and keep the overall architecture and implementation complexity under \
+    control instead of introducing abstractions for operating systems that HIVE \
+    is not designed to support."
+);
+#[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
+compile_error!("HIVE currently supports only x86_64 Linux.");
 use std::env::args;
 
 use hivehq::{
