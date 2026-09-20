@@ -7,6 +7,8 @@ license = "GPL-3.0-only"
 include = [
     "*.asm"
 ]
+repository = "https://github.com/L0rdCycl0p/hivehq"
+readme = "README.md"
 [features]
 default = [
     "x86_64"
@@ -49,6 +51,8 @@ overflow-checks = false
 codegen-units = 1
 
 [lib]
+name = "hivehq"
+path = "src/lib.rs"
 [[bin]]
 name = "hive"
 path = "src/main.rs"
