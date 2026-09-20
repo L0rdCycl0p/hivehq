@@ -32,6 +32,7 @@ parking_lot = "0.12"
 chrono = "0.4"
 bitflags = "2"
 binrw = "0.15"
+clap = { version = "4.6", features = ["derive"] }
 [profile.dbg]
 inherits = "dev"
 
@@ -75,7 +76,6 @@ style = { level = "warn", priority = -1 }
 suspicious = { level = "warn", priority = -1 }
 unwrap_used = "warn"
 expect_used = "warn"
-indexing_slicing = "warn"
 unreachable = "deny"
 unimplemented = "warn"
 unchecked_time_subtraction = "warn"

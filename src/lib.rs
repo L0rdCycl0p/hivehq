@@ -31,6 +31,7 @@ compile_error!(
 compile_error!("HIVE currently supports only x86_64 Linux.");
 //#![warn(missing_docs)]
 pub mod debug;
+pub mod cli;
 pub mod error;
 pub mod jit;
 pub mod parser;

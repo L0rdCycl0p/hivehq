@@ -173,7 +173,7 @@ impl<S: Read + Seek> Schedular<S> {
 
                 let code = jit_function(buf.into_boxed_slice());
 
-                Arc::new(exec_page_manager.load_func(function_id, code)?)
+                exec_page_manager.load_func(function_id, code)?
             }
         };
 

@@ -128,10 +128,7 @@ impl ManagedPage {
 
 pub struct ExecPageManager {
     pages: Vec<ManagedPage>,
-
     functions: Vec<Option<Weak<LoadedFunc>>>,
-
-    next_function_id: u64,
 }
 
 impl ExecPageManager {
@@ -143,8 +140,7 @@ impl ExecPageManager {
         }
         Self {
             pages: Vec::new(),
-            functions: Vec::new(),
-            next_function_id: 0,
+            functions: Vec::new()
         }
     }
 
@@ -175,7 +171,7 @@ impl ExecPageManager {
         weak_func.strong_count() > 0
     }
 
-    pub fn load_func(&mut self, id: FunctionId, code: Box<[u8]>) -> io::Result<LoadedFunc> {
+    pub fn load_func(&mut self, id: FunctionId, code: Box<[u8]>) -> io::Result<Arc<LoadedFunc>> {
         let len = code.len();
 
         if len == 0 {
@@ -262,13 +258,24 @@ impl ExecPageManager {
         }
 
         let ptr = function_ptr.expect("function length was checked to be non-zero");
-
-        Ok(LoadedFunc {
+        let loaded_func = LoadedFunc {
             id,
             ptr,
             len,
             pages: used_pages.into_boxed_slice(),
-        })
+        };
+        let loaded_func = Arc::new(loaded_func);
+        if self.functions.len() <= id.0 as usize {
+            let mut c = id.0 as usize - self.functions.len(); // [0, 1, 2, 3, 4, 5, 6, 7, 8] 9
+            while c != 0 {
+                self.functions.push(None);
+                c-=1;
+            }
+            self.functions.push(None);
+        } else {
+            self.functions[id.0 as usize] = Some(Arc::downgrade(&loaded_func));
+        }
+        Ok(loaded_func)
     }
 }
 

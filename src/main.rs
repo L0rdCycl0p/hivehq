@@ -28,17 +28,13 @@ compile_error!(
 );
 #[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
 compile_error!("HIVE currently supports only x86_64 Linux.");
-use std::env::args;
 
+use clap::Parser;
 use hivehq::{
-    error::HiveError,
-    runtime::runner::run_hive_data_stream,
+    cli::Cli, error::HiveError, runtime::runner::run_hive_data_stream,
 };
 
 fn main() -> Result<(), HiveError> {
-    let mut args = args();
-    args.next();
-    let file = args.next().unwrap();
-    let path = std::path::PathBuf::from(file);
-    run_hive_data_stream(std::fs::File::open(path)?)
+    let args = Cli::parse();
+    run_hive_data_stream(std::fs::File::open(args.program)?)
 }
