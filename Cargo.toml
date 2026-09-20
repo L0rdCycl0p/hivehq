@@ -1,0 +1,77 @@
+[package]
+name = "hivehq"
+version = "0.1.0"
+edition = "2024"
+description = "HIVE (Hive Is Very Efficient) — a lightweight native runtime inspired by BEAM, designed to run large numbers of small, isolated processes without a virtual machine."
+license = "GPL-3.0-only"
+include = [
+    "*.asm"
+]
+[features]
+default = [
+    "x86_64"
+]
+debug = []
+x86_64 = []
+
+[dependencies]
+thiserror = "2.0.20"
+libc = "0.2"
+parking_lot = "0.12.5"
+chrono = "0.4.45"
+bitflags = "2.13.2"
+binrw = "0.15.2"
+[profile.dbg]
+inherits = "dev"
+
+opt-level = 0
+debug = 2
+split-debuginfo = "off"
+debug-assertions = true
+overflow-checks = true
+incremental = false
+strip = "none"
+panic = "unwind"
+codegen-units = 1
+
+[profile.dbg.package."*"]
+opt-level = 0
+debug = 2
+split-debuginfo = "off"
+strip = "none"
+
+[profile.release]
+opt-level = 3
+debug = "none"
+lto = "fat"
+strip = true
+overflow-checks = false
+codegen-units = 1
+
+
+[[test]]
+name = "fibonacci"
+test = true
+path = "tests/fibonacci.rs"
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+complexity = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+#restriction = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+expect_used = "warn"
+indexing_slicing = "warn"
+unreachable = "deny"
+unimplemented = "warn"
+unchecked_time_subtraction = "warn"
+todo = "warn"
+string_slice = "warn"
+panic_in_result_fn = "warn"
+panic = "warn"
+exit = "warn"
+as_conversions = "allow"
+big_endian_bytes = "deny"
+cast_possible_truncation = "allow"
