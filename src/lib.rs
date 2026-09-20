@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+//! HIVE (Hive Is Very Efficient) — a lightweight native runtime inspired by BEAM, designed to run large numbers of small, isolated processes without a virtual machine.
 
 #[cfg(not(target_os = "linux"))]
 compile_error!(
@@ -29,11 +30,17 @@ compile_error!(
 );
 #[cfg(not(all(target_os = "linux", target_arch = "x86_64")))]
 compile_error!("HIVE currently supports only x86_64 Linux.");
-//#![warn(missing_docs)]
+
+/// Debug Tools
 pub mod debug;
+/// CLI Parsing with clap
 pub mod cli;
+/// errors
 pub mod error;
+/// Just in Time compilation
 pub mod jit;
+/// `.hive` parser (binrw)
 pub mod parser;
+/// Execution runtime
 pub mod runtime;
 pub use debug::gdb_marker;

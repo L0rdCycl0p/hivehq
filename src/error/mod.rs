@@ -18,7 +18,7 @@
 use std::io;
 
 use crate::{jit::parser::ParseError, parser::errors::LoadError, runtime::load_exec::FunctionId};
-
+/// Hive's errors
 #[derive(thiserror::Error, Debug)]
 pub enum HiveError {
     #[error("")]

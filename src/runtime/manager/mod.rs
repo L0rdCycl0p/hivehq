@@ -30,10 +30,13 @@ use crate::{
         schedular::ProcessRegistryEntry,
     },
 };
-
+/// The schedulars shares this struct
 pub struct Manager<S: Read + Seek> {
+    /// Shared `ExecPageManager`
     pub exec_page_manager: RwLock<ExecPageManager>,
+    /// A list of `PidSlot`'s
     pub pids: RwLock<Vec<PidSlot>>,
+    /// Shared loaded file
     pub loaded_file: RwLock<LoadedFile<S>>,
 }
 
@@ -43,6 +46,9 @@ pub enum PidSlot {
 }
 
 impl<S: Read + Seek> Manager<S> {
+    /// Allocates a new pid to a process
+    /// # Errors
+    /// - `HiveError::NoPidsAvailable` if no pids are available
     pub fn allocate_pid(&self, process: Arc<ProcessRegistryEntry>) -> Result<u32, HiveError> {
         let mut pids = self.pids.write();
 

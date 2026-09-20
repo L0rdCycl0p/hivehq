@@ -26,10 +26,10 @@ use libc::{
 };
 
 const PAGE_SIZE: usize = 4096;
-
+/// The `FunctionId`
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunctionId(pub u32);
-
+/// A struct that represents a loaded Page in memory
 pub struct ExecPage {
     ptr: *mut u8,
     size: usize,
@@ -87,6 +87,7 @@ impl Drop for ExecPage {
     }
 }
 
+/// A struct that represents a loaded func
 pub struct LoadedFunc {
     pub id: FunctionId,
     pub ptr: *mut u8,
@@ -96,19 +97,22 @@ pub struct LoadedFunc {
 }
 
 impl LoadedFunc {
+    /// getter for `self.ptr`
     #[must_use]
     pub const fn ptr(&self) -> *mut u8 {
         self.ptr
     }
-
+    /// getter for `self.len`
     #[must_use]
     pub const fn len(&self) -> usize {
         self.len
     }
+    /// checks if `self.len` is equal to zero
     #[must_use]
     pub const fn is_empty(&self) -> bool {
         self.len == 0
     }
+    /// getter for `self.id`
     #[must_use]
     pub const fn id(&self) -> FunctionId {
         self.id
@@ -132,18 +136,19 @@ pub struct ExecPageManager {
 }
 
 impl ExecPageManager {
+    /// Creates a new `ExecPageManager`
     #[must_use]
     pub fn new(num_funcs: usize) -> Self {
-        let mut funcs: Vec<Option<Weak<LoadedFunc>>> = Vec::with_capacity(num_funcs);
+        let mut functions: Vec<Option<Weak<LoadedFunc>>> = Vec::with_capacity(num_funcs);
         for _ in 0..num_funcs {
-            funcs.push(None);
+            functions.push(None);
         }
         Self {
             pages: Vec::new(),
-            functions: Vec::new()
+            functions
         }
     }
-
+    /// Gets a function if it is already loaded into memory via `mmap`
     pub fn get_func(&mut self, id: FunctionId) -> io::Result<Arc<LoadedFunc>> {
         let index = id.0 as usize;
 
@@ -159,7 +164,7 @@ impl ExecPageManager {
 
         Err(io::Error::new(io::ErrorKind::NotFound, ""))
     }
-
+    /// Checks whether a function exists
     #[must_use]
     pub fn func_exists(&self, id: FunctionId) -> bool {
         let index = id.0 as usize;
@@ -170,7 +175,7 @@ impl ExecPageManager {
 
         weak_func.strong_count() > 0
     }
-
+    /// Loads a function into memory via `mmap`
     pub fn load_func(&mut self, id: FunctionId, code: Box<[u8]>) -> io::Result<Arc<LoadedFunc>> {
         let len = code.len();
 

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+//! HIVE (Hive Is Very Efficient) — a lightweight native runtime inspired by BEAM, designed to run large numbers of small, isolated processes without a virtual machine.
+
 #[cfg(not(target_os = "linux"))]
 compile_error!(
     "HIVE only supports Linux. \
