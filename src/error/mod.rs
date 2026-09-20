@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use std::io;
+use std::{alloc::LayoutError, io};
 
 use crate::{jit::parser::ParseError, parser::errors::LoadError, runtime::load_exec::FunctionId};
 /// Hive's errors
@@ -44,4 +44,13 @@ pub enum HiveError {
 
     #[error("No pids available")]
     NoPidsAvailable,
+    
+    #[error("HIVE stack exhausted")]
+    StackExhausted,
+
+    #[error("attempted to free unknown stack frame")]
+    AttemptedToFreeUnknownStackFrame,
+
+    #[error("")]
+    LayoutError(#[from] LayoutError)
 }

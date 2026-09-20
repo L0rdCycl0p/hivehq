@@ -88,7 +88,7 @@ impl ParsedFile {
         for section in &parsed.section_table {
             match section.type_ {
                 SectionType::Strings => {
-                    source.seek(SeekFrom::Start(section.offset));
+                    let _ = source.seek(SeekFrom::Start(section.offset));
                     let section_strings = StringTable::read_args(&mut source, (section.size,))?;
 
                     strings.append(
@@ -100,7 +100,7 @@ impl ParsedFile {
                     );
                 }
                 SectionType::Functions => {
-                    source.seek(SeekFrom::Start(section.offset));
+                    let _ = source.seek(SeekFrom::Start(section.offset));
                     let mut section_functions =
                         FunctionTable::read_args(&mut source, (section.size,))?;
 

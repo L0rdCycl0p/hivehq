@@ -174,108 +174,108 @@ pub struct CallParam {
 
 #[repr(C, packed)]
 pub union ProcessRequestParam {
-    // FRAME
+    /// FRAME
     pub frame: FrameParam,
 
-    // FRAME_ALLOC
+    /// `FRAME_ALLOC`
     pub frame_alloc: u32,
 
-    // MALLOC
+    /// MALLOC
     pub malloc: AllocParam,
 
-    // CALLOC
+    /// CALLOC
     pub calloc: CallocParam,
 
-    // REALLOC
+    /// REALLOC
     pub realloc: ReallocParam,
 
-    // FREE
+    /// FREE
     pub free: u64,
 
-    // MEMCPY / MEMMOVE / MEMSET / MEMCMP
+    /// MEMCPY / MEMMOVE / MEMSET / MEMCMP
     pub mem_region: MemRegionParam,
     pub memset: MemsetParam,
 
-    // STACK_ALLOC
+    /// `STACK_ALLOC`
     pub stack_alloc: AllocParam,
 
-    // STACK_FREE
+    /// `STACK_FREE`
     pub stack_free: u64,
 
-    // PROC_SPAWN
+    /// `PROC_SPAWN`
     pub proc_spawn: ProcSpawnParam,
 
-    // PROC_SELF
+    /// `PROC_SELF`
     pub proc_self: u64,
 
-    // PROC_EXIT
+    /// `PROC_EXIT`
     pub proc_exit: u8,
 
-    // PROC_KILL
+    /// `PROC_KILL`
     pub proc_kill: ProcKillParam,
 
-    // PROC_STATE
+    /// `PROC_STATE`
     pub proc_state: ProcPidParam,
 
-    // PROC_YIELD
-    // PROC_SLEEP
+    /// `PROC_YIELD`
+    /// `PROC_SLEEP`
     /// duration to sleep
     pub proc_sleep: u64,
 
-    // PROC_ALIVE
+    /// `PROC_ALIVE`
     pub proc_alive: ProcPidParam,
 
-    // PROC_LINK / PROC_UNLINK / PROC_MONITOR / PROC_DEMONITOR
+    /// `PROC_LINK` / `PROC_UNLINK` / `PROC_MONITOR` / `PROC_DEMONITOR`
     pub proc_pid: u32,
 
-    // SCHED_YIELD
-    // SCHED_ID
-    // SCHED_COUNT
-    // SCHED_WAIT
+    /// `SCHED_YIELD`
+    /// `SCHED_ID`
+    /// `SCHED_COUNT`
+    /// `SCHED_WAIT`
     pub sched_wait: u32,
 
-    // SCHED_WAKE
+    /// `SCHED_WAKE`
     pub sched_wake: u32,
 
-    // SCHED_MIGRATE
+    /// `SCHED_MIGRATE`
     pub sched_migrate: SchedMigrateParam,
 
-    // MAIL_SEND
+    /// `MAIL_SEND`
     pub mail_send: MailSendParam,
 
-    // MAIL_RECV / MAIL_TRYRECV / MAIL_PEEK
-    // ptr to the return value (mail box entry)
+    /// `MAIL_RECV` / `MAIL_TRYRECV` / `MAIL_PEEK`
+    /// ptr to the return value (mail box entry)
     pub mail_recv: u64, // ptr
 
-    // MAIL_LEN
-    // ptr to the return value (mail len)
+    /// `MAIL_LEN`
+    /// ptr to the return value (mail len)
     pub mail_len: u64,
 
-    // AWAIT
+    /// AWAIT
     pub r#await: u64,
 
-    // ASYNC
+    /// ASYNC
     pub r#async: AsyncParam,
 
-    // RESUME / SUSPEND
+    /// RESUME / SUSPEND
     pub process: u32,
 
-    // JIT
+    /// JIT
     pub jit: u32,
 
-    // CALL
+    /// CALL
     pub call: CallParam,
 
-    // CALL_WORKER
+    /// `CALL_WORKER`
     pub call_worker: CallParam,
 
-    // NATIVE_CALL
+    /// `NATIVE_CALL`
     pub native_call: CallParam,
 
-    // NATIVE_RETURN
-    pub native_return: u64, // ptr
-
-    pub ret: u64, // ptr
+    /// `NATIVE_RETURN`
+    pub native_return: u64,
+    /// ptr to return value
+    pub ret: u64,
 }
 
 pub const PROCESS_REQUEST_PARAM_SIZE: usize = size_of::<ProcessRequestParam>();

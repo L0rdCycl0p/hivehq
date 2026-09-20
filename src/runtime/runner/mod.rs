@@ -49,7 +49,7 @@ pub fn run_with_loaded_file<S: Read + Seek>(
     if let Some(source) = &mut loaded_file.source {
         let entry_point = &loaded_file.functions[loaded_file.header.entry_point as usize];
 
-        source.seek(SeekFrom::Start(entry_point.code_offset));
+        let _ = source.seek(SeekFrom::Start(entry_point.code_offset));
 
         // SAFETY: buf is overwritten by read
         #[allow(clippy::uninit_vec)]
@@ -112,18 +112,12 @@ pub fn run_with_init_func<S: Read + Seek>(
         loaded_file,
     };
     let manager = Arc::new(manager);
-    let stack = Stack::new(STACK_SIZE);
-    let mut schedular = Schedular {
-        process_registry: Vec::with_capacity(100),
-        context,
-        manager,
-        stack,
-    };
+    let mut schedular = Schedular::new(manager, STACK_SIZE)?;
 
     // ------------------------------------------------------------
     // Process stack
     // ------------------------------------------------------------
-    unsafe { schedular.new_process(0, FunctionId(init_func_id)) };
+    unsafe { schedular.new_process(0, FunctionId(init_func_id))? };
 
     // ------------------------------------------------------------
     // Run

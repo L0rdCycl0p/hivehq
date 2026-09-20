@@ -16,7 +16,7 @@
 
 use std::alloc::{Layout, alloc, dealloc};
 
-use crate::runtime::schedular::{api::ProcessRequest, context::HiveContext};
+use crate::{error::HiveError, runtime::schedular::{api::ProcessRequest, context::HiveContext}};
 
 use super::Pid;
 
@@ -39,19 +39,24 @@ pub enum FrameState {
 }
 
 impl Stack {
-    #[must_use]
-    pub fn new(size: usize) -> Self {
-        assert!(size > 0);
+    /// Creates a new Hive Stack
+    /// # Errors
+    /// - `HiveError::CanNotAllocateStack`
+    pub fn new(size: usize) -> Result<Self, HiveError> {
+        if size == 0 {
+            return Err(HiveError::CanNotAllocateStack)
+        }
 
-        let layout = Layout::from_size_align(size, 16).expect("invalid stack layout");
+        let layout = Layout::from_size_align(size, 16)?;
 
         let start = unsafe { alloc(layout) };
 
-        assert!(!start.is_null(), "failed to allocate stack");
-
+        if start.is_null() {
+            return Err(HiveError::CanNotAllocateStack)
+        }
         let end = unsafe { start.add(size) };
 
-        Self {
+        Ok(Self {
             start,
             end,
             size,
@@ -60,10 +65,12 @@ impl Stack {
                 end,
                 state: FrameState::Free,
             }],
-        }
+        })
     }
-
-    pub fn allocate(&mut self, pid: Pid, size: usize) -> Option<StackRegion> {
+    /// Allocates a `StackRegion`
+    /// # Errors
+    /// - `HiveError::StackExhausted`
+    pub fn allocate(&mut self, pid: Pid, size: usize) -> Result<StackRegion, HiveError> {
         for i in 0..self.frames.len() {
             let frame = &mut self.frames[i];
 
@@ -95,27 +102,29 @@ impl Stack {
                 );
             }
 
-            return Some(StackRegion {
+            return Ok(StackRegion {
                 start,
                 end,
                 state: FrameState::Used(pid),
             });
         }
 
-        None
+        Err(HiveError::StackExhausted)
     }
-
-    pub fn free(&mut self, start: *mut u8) {
+    /// Frees a stack frame
+    /// # Errors
+    /// - `HiveError::AttemptedToFreeUnknownStackFrame`
+    pub fn free(&mut self, start: *mut u8) -> Result<(), HiveError> {
         for frame in &mut self.frames {
             if frame.start == start {
                 frame.state = FrameState::Free;
-                return;
+                return Ok(());
             }
         }
 
-        panic!("attempted to free unknown stack frame");
+        Err(HiveError::AttemptedToFreeUnknownStackFrame)
     }
-
+    /// Compact the stack
     pub fn compact(&mut self) {
         let mut i = 0;
 
@@ -136,7 +145,12 @@ impl Stack {
             i += 1;
         }
     }
-
+    /// Allocates a new stack frame and initialised it for a new process
+    /// # Safety
+    /// The caller must ensure that all the pointers are valid
+    /// # Errors
+    /// - `HiveError::StackExhausted`
+    /// - `HiveError::AttemptedToFreeUnknownStackFrame`
     pub unsafe fn new_proc_stack(
         &mut self,
         pid: u32,
@@ -144,9 +158,9 @@ impl Stack {
         process_request_ptr: *mut ProcessRequest,
         schedular_context_ptr: *mut HiveContext,
         process_context_ptr: *mut HiveContext,
-    ) {
+    ) -> Result<StackRegion, HiveError>{
         unsafe {
-            let stack = self.allocate(pid, size).expect("HIVE stack exhausted");
+            let stack = self.allocate(pid, size)?;
 
             let rsp = (stack.end as usize - 24) & !15;
 
@@ -161,6 +175,7 @@ impl Stack {
             *((rsp + 8) as *mut u64) = schedular_context_ptr as u64;
 
             *((rsp + 16) as *mut u64) = process_context_ptr as u64;
+            Ok(stack)
         }
     }
 }

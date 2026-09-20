@@ -78,13 +78,13 @@ pub enum ProcessState {
     Sleep { end: i64 },
 }
 impl<S: Read + Seek> Schedular<S> {
-    pub fn new(manager: Arc<Manager<S>>, stack_size: usize) -> Self {
-        Self {
+    pub fn new(manager: Arc<Manager<S>>, stack_size: usize) -> Result<Self, HiveError> {
+        Ok(Self {
             process_registry: Vec::with_capacity(100),
             context: HiveContext::default(),
-            stack: Stack::new(stack_size),
+            stack: Stack::new(stack_size)?,
             manager,
-        }
+        })
     }
 }
 impl<S: Read + Seek> Schedular<S> {
@@ -212,7 +212,7 @@ impl<S: Read + Seek> Schedular<S> {
                 &raw mut process.process.request,
                 &raw mut self.context,
                 &raw mut process.process.context,
-            );
+            )?;
 
             self.process_registry.push(process);
 
@@ -225,24 +225,25 @@ impl<S: Read + Seek> Schedular<S> {
         function_id: u32,
         args: *const c_void,
         frame_size: usize,
-    ) {
+    ) -> Result<(), HiveError> {
         let frame = self
             .stack
-            .allocate(pid, frame_size)
-            .expect("HIVE stack exhausted");
+            .allocate(pid, frame_size)?;
 
         self.process_registry[pid as usize].stack_frames.push(frame);
 
         // Initialize frame/function arguments here.
         let _ = function_id;
         let _ = args;
+        Ok(())
     }
 
-    pub fn return_function(&mut self, pid: Pid) {
+    pub fn return_function(&mut self, pid: Pid) -> Result<(), HiveError> {
         let process = &mut self.process_registry[pid as usize];
 
         let frame = process.stack_frames.pop().expect("RET on empty stack");
 
-        self.stack.free(frame.start);
+        self.stack.free(frame.start)?;
+        Ok(())
     }
 }

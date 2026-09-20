@@ -68,6 +68,7 @@ name = "hive"
 path = "src/main.rs"
 [lints.rust]
 missing_docs = "warn"
+unused_must_use = "deny"
 [lints.rustdoc]
 all = "warn"
 [lints.clippy]
@@ -91,3 +92,6 @@ exit = "warn"
 as_conversions = "allow"
 big_endian_bytes = "deny"
 cast_possible_truncation = "allow"
+unused_result_ok = "deny"
+unused_async = "deny"
+unused_enumerate_index = "deny"
