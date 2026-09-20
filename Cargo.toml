@@ -15,20 +15,23 @@ include = [
 ]
 repository = "https://github.com/L0rdCycl0p/hivehq"
 readme = "README.md"
+
+keywords = ["runtime", "linux", "memory", "server"]
+authors = ["L0rdCycl0p"]
+build = "build.rs"
+categories = ["concurrency", "virtualization"]
 [features]
-default = [
-    "x86_64"
-]
+default = ["x86_64"]
 debug = []
 x86_64 = []
 
 [dependencies]
-thiserror = "2.0.20"
+thiserror = "2"
 libc = "0.2"
-parking_lot = "0.12.5"
-chrono = "0.4.45"
-bitflags = "2.13.2"
-binrw = "0.15.2"
+parking_lot = "0.12"
+chrono = "0.4"
+bitflags = "2"
+binrw = "0.15"
 [profile.dbg]
 inherits = "dev"
 
