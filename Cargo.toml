@@ -1,6 +1,6 @@
 [package]
 name = "hivehq"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "HIVE (Hive Is Very Efficient) — a lightweight native runtime inspired by BEAM, designed to run large numbers of small, isolated processes without a virtual machine."
 license = "GPL-3.0-only"
