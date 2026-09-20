@@ -9,7 +9,6 @@ include = [
     "LICENSE",
     "src/**/*.rs",
     "src/**/*.asm",
-    "docs/**",
     "flake.lock",
     "flake.nix",
 ]
