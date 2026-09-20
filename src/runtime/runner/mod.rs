@@ -21,7 +21,6 @@ use crate::jit::parser::Parser;
 use crate::parser::LoadedFile;
 use crate::parser::load_file::load_file_by_data;
 use crate::runtime::manager::Manager;
-use crate::runtime::schedular::stack::Stack;
 use crate::{
     error::HiveError,
     jit::{opcode::Opcode, x86_64::jit_x86_64},

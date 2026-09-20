@@ -284,7 +284,7 @@ impl ExecPageManager {
 }
 
 impl Default for ExecPageManager {
-    #[must_use]
+    
     fn default() -> Self {
         Self::new(0)
     }
