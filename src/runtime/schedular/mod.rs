@@ -15,6 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use chrono::Utc;
+use log::{info, warn};
 use std::{
     collections::VecDeque,
     io::{Read, Seek, SeekFrom},
@@ -94,7 +95,7 @@ impl<S: Read + Seek> Schedular<S> {
 
             loop {
                 if self.process_registry.is_empty() {
-                    println!("All process done");
+                    warn!("All processes are done");
                     break;
                 }
 

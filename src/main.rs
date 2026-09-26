@@ -34,6 +34,11 @@ use clap::Parser;
 use hivehq::{cli::Cli, error::HiveError, runtime::runner::run_hive_data_stream};
 
 fn main() -> Result<(), HiveError> {
+    cfg_select! {
+        feature = "colog" => colog::init(),
+        feature = "env_logger" => env_logger::init()
+    }
+
     let args = Cli::parse();
     run_hive_data_stream(std::fs::File::open(args.program)?)
 }
