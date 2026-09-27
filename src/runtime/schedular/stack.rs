@@ -16,7 +16,10 @@
 
 use std::alloc::{Layout, alloc, dealloc};
 
-use crate::{error::HiveError, runtime::schedular::{api::ProcessRequest, context::HiveContext}};
+use crate::{
+    error::HiveError,
+    runtime::schedular::{api::ProcessRequest, context::HiveContext},
+};
 
 use super::Pid;
 
@@ -44,7 +47,7 @@ impl Stack {
     /// - `HiveError::CanNotAllocateStack`
     pub fn new(size: usize) -> Result<Self, HiveError> {
         if size == 0 {
-            return Err(HiveError::CanNotAllocateStack)
+            return Err(HiveError::CanNotAllocateStack);
         }
 
         let layout = Layout::from_size_align(size, 16)?;
@@ -52,7 +55,7 @@ impl Stack {
         let start = unsafe { alloc(layout) };
 
         if start.is_null() {
-            return Err(HiveError::CanNotAllocateStack)
+            return Err(HiveError::CanNotAllocateStack);
         }
         let end = unsafe { start.add(size) };
 
@@ -158,7 +161,7 @@ impl Stack {
         process_request_ptr: *mut ProcessRequest,
         schedular_context_ptr: *mut HiveContext,
         process_context_ptr: *mut HiveContext,
-    ) -> Result<StackRegion, HiveError>{
+    ) -> Result<StackRegion, HiveError> {
         unsafe {
             let stack = self.allocate(pid, size)?;
 

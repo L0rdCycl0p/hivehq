@@ -1004,8 +1004,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
             TranslatedOpcode(a, b)
         }
         Opcode::Calloc { dst, count, size } => {
-            let (a, b) =
-                gen_sched_req(0x11, &[(dst, 1, 8), (count, 9, 8), (size, 17, 8)], offset);
+            let (a, b) = gen_sched_req(0x11, &[(dst, 1, 8), (count, 9, 8), (size, 17, 8)], offset);
             TranslatedOpcode(a, b)
         }
         Opcode::Realloc { dst, ptr, size } => {
@@ -1025,8 +1024,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
             TranslatedOpcode(a, b)
         }
         Opcode::Memset { dst, value, size } => {
-            let (a, b) =
-                gen_sched_req(0x16, &[(dst, 1, 8), (value, 9, 1), (size, 10, 8)], offset);
+            let (a, b) = gen_sched_req(0x16, &[(dst, 1, 8), (value, 9, 1), (size, 10, 8)], offset);
             TranslatedOpcode(a, b)
         }
         Opcode::Memcmp { a, b, size } => {

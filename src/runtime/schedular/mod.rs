@@ -37,7 +37,7 @@ use crate::{
     error::HiveError,
     jit::jit_function,
     runtime::{
-        load_exec::FunctionId,
+        load_exec::{FunctionId, LoadedFunc},
         manager::Manager,
         schedular::{
             api::ProcessRequestTag,
@@ -56,11 +56,16 @@ pub struct Schedular<S: Read + Seek> {
     pub manager: Arc<Manager<S>>,
 }
 
+pub struct CallRetStack {
+    pub stack_region: StackRegion,
+    pub function: Arc<LoadedFunc>,
+}
+
 pub struct ProcessRegistryEntry {
     pub pid: Pid,
 
     // The process' CALL/RET stack.
-    pub stack_frames: Vec<StackRegion>,
+    pub stack_frames: Vec<CallRetStack>,
 
     pub process: Box<Process>,
     pub state: ProcessState,
@@ -147,7 +152,8 @@ impl<S: Read + Seek> Schedular<S> {
             let (code_offset, code_size, frame_size) = {
                 let loaded_file = self.manager.loaded_file.read();
 
-                let function = &loaded_file.functions[function_id.0 as usize];
+                let function = loaded_file.functions[function_id.0 as usize];
+                drop(loaded_file);
 
                 (
                     function.code_offset,
@@ -168,13 +174,13 @@ impl<S: Read + Seek> Schedular<S> {
                         .source
                         .as_mut()
                         .ok_or(HiveError::NoSourceAvailable)?;
-
                     source.seek(SeekFrom::Start(code_offset))?;
 
                     let mut buf = vec![0; code_size as usize];
 
                     source.read_exact(&mut buf)?;
 
+                    drop(loaded_file);
                     let code = jit_function(buf.into_boxed_slice());
 
                     exec_page_manager.load_func(function_id, code)?
@@ -189,9 +195,6 @@ impl<S: Read + Seek> Schedular<S> {
 
             context.rip = loaded_func.ptr as u64;
 
-            context.rbx = 5;
-            context.r12 = 12;
-
             let process = Process {
                 context,
                 request: ProcessRequest {
@@ -202,20 +205,24 @@ impl<S: Read + Seek> Schedular<S> {
 
             let mut process = ProcessRegistryEntry {
                 pid,
-                stack_frames: Vec::new(),
+                stack_frames: Vec::with_capacity(5),
                 process: Box::new(process),
                 state: ProcessState::Running,
                 mailbox: VecDeque::new(),
             };
 
-            self.stack.new_proc_stack(
+            let frame = self.stack.new_proc_stack(
                 pid,
                 frame_size as usize,
                 &raw mut process.process.request,
                 &raw mut self.context,
                 &raw mut process.process.context,
             )?;
-
+            let frame = CallRetStack {
+                stack_region: frame,
+                function: loaded_func,
+            };
+            process.stack_frames.push(frame);
             self.process_registry.push(process);
 
             Ok(())
@@ -228,10 +235,46 @@ impl<S: Read + Seek> Schedular<S> {
         args: *const c_void,
         frame_size: usize,
     ) -> Result<(), HiveError> {
-        let frame = self
-            .stack
-            .allocate(pid, frame_size)?;
+        let frame = self.stack.allocate(pid, frame_size)?;
+        let (code_offset, code_size, frame_size) = {
+            let loaded_file = self.manager.loaded_file.read();
 
+            let function = &loaded_file.functions[function_id as usize];
+
+            (
+                function.code_offset,
+                function.code_size,
+                function.frame_size,
+            )
+        };
+        let loaded_func = {
+            let mut exec_page_manager = self.manager.exec_page_manager.write();
+
+            if exec_page_manager.func_exists(FunctionId(function_id)) {
+                exec_page_manager.get_func(FunctionId(function_id))?
+            } else {
+                let mut loaded_file = self.manager.loaded_file.write();
+
+                let source = loaded_file
+                    .source
+                    .as_mut()
+                    .ok_or(HiveError::NoSourceAvailable)?;
+                source.seek(SeekFrom::Start(code_offset))?;
+
+                let mut buf = vec![0; code_size as usize];
+
+                source.read_exact(&mut buf)?;
+
+                drop(loaded_file);
+                let code = jit_function(buf.into_boxed_slice());
+
+                exec_page_manager.load_func(FunctionId(function_id), code)?
+            }
+        };
+        let frame = CallRetStack {
+            stack_region: frame,
+            function: loaded_func,
+        };
         self.process_registry[pid as usize].stack_frames.push(frame);
 
         // Initialize frame/function arguments here.
@@ -245,7 +288,7 @@ impl<S: Read + Seek> Schedular<S> {
 
         let frame = process.stack_frames.pop().expect("RET on empty stack");
 
-        self.stack.free(frame.start)?;
+        self.stack.free(frame.stack_region.start)?;
         Ok(())
     }
 }

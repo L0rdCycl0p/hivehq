@@ -17,6 +17,7 @@
 use parking_lot::RwLock;
 
 use crate::gdb_marker;
+use crate::jit::jit_function;
 use crate::jit::parser::Parser;
 use crate::parser::LoadedFile;
 use crate::parser::load_file::load_file_by_data;
@@ -50,81 +51,31 @@ pub fn run_with_loaded_file<S: Read + Seek>(
 
         let _ = source.seek(SeekFrom::Start(entry_point.code_offset));
 
-        // SAFETY: buf is overwritten by read
-        #[allow(clippy::uninit_vec)]
-        let mut buf = Vec::with_capacity(entry_point.code_size as usize);
-        #[allow(clippy::uninit_vec)]
-        unsafe {
-            buf.set_len(entry_point.code_size as usize);
+        let init_func_id = loaded_file.header.entry_point;
+
+        let exec_page_manager = ExecPageManager::new(1);
+
+        let loaded_file = RwLock::new(loaded_file);
+        let manager = Manager {
+            exec_page_manager: RwLock::new(exec_page_manager),
+            pids: RwLock::new(Vec::new()),
+            loaded_file,
         };
-        #[allow(clippy::read_zero_byte_vec)]
-        let _ = source.read_exact(&mut buf);
-        let opcodes = Parser::new(&buf).parse()?;
-        run_with_init_func(&opcodes, loaded_file)
+        let manager = Arc::new(manager);
+        let mut schedular = Schedular::new(manager, STACK_SIZE)?;
+
+        unsafe { schedular.new_process(0, FunctionId(init_func_id))? };
+
+        // ------------------------------------------------------------
+        // Run
+        // ------------------------------------------------------------
+
+        unsafe {
+            schedular.schedular_run();
+        }
+        gdb_marker!(runner_run_with_init_func_end);
+        Ok(())
     } else {
         Err(HiveError::NoSourceAvailable)
     }
-}
-/// # Panics
-pub fn run_with_init_func<S: Read + Seek>(
-    opcodes: &[Opcode],
-    loaded_file: LoadedFile<S>,
-) -> Result<(), HiveError> {
-    let init_func_id = loaded_file.header.entry_point;
-    let init_func = &loaded_file.functions[init_func_id as usize];
-    let _init_func_frame_size = init_func.frame_size as usize;
-    let code = jit_x86_64(&opcodes);
-    // ------------------------------------------------------------
-    // Executable memory
-    // ------------------------------------------------------------
-
-    let mut exec_page_manager = ExecPageManager::new(1);
-
-    let loaded_func = exec_page_manager.load_func(FunctionId(0), code)?;
-    // ------------------------------------------------------------
-    // Initial CPU context
-    // ------------------------------------------------------------
-
-    let mut context = HiveContext::default();
-
-    context.rip = loaded_func.ptr as u64;
-
-    // 5 + 12 = 17
-    context.rbx = 5;
-    context.r12 = 12;
-
-    // ------------------------------------------------------------
-    // Process
-    // ------------------------------------------------------------
-
-    let _process = Process {
-        context,
-        request: ProcessRequest {
-            request: ProcessRequestTag::SchedYield,
-            params: [0x0; 24],
-        },
-    };
-    let loaded_file = RwLock::new(loaded_file);
-    let manager = Manager {
-        exec_page_manager: RwLock::new(exec_page_manager),
-        pids: RwLock::new(Vec::new()),
-        loaded_file,
-    };
-    let manager = Arc::new(manager);
-    let mut schedular = Schedular::new(manager, STACK_SIZE)?;
-
-    // ------------------------------------------------------------
-    // Process stack
-    // ------------------------------------------------------------
-    unsafe { schedular.new_process(0, FunctionId(init_func_id))? };
-
-    // ------------------------------------------------------------
-    // Run
-    // ------------------------------------------------------------
-
-    unsafe {
-        schedular.schedular_run();
-    }
-    gdb_marker!(runner_run_with_init_func_end);
-    Ok(())
 }

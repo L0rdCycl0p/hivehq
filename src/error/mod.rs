@@ -44,7 +44,7 @@ pub enum HiveError {
 
     #[error("No pids available")]
     NoPidsAvailable,
-    
+
     #[error("HIVE stack exhausted")]
     StackExhausted,
 
@@ -52,5 +52,5 @@ pub enum HiveError {
     AttemptedToFreeUnknownStackFrame,
 
     #[error("")]
-    LayoutError(#[from] LayoutError)
+    LayoutError(#[from] LayoutError),
 }

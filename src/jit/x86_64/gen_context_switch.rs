@@ -39,7 +39,6 @@ pub fn gen_context_switch(offset: usize) -> Vec<u8> {
 
     code.extend_from_slice(&[0x48, 0x8D, 0x0D, 0x00, 0x00, 0x00, 0x00]);
 
-
     // mov rax, <context_switch_addr>
     code.extend_from_slice(&[0x48, 0xB8]);
     code.extend_from_slice(&context_switch_addr.to_le_bytes());

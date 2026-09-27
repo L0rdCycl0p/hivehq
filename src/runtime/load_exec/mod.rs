@@ -30,7 +30,7 @@ const PAGE_SIZE: usize = 4096;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunctionId(pub u32);
 /// A memory page containing JIT-compiled executable code.
-/// 
+///
 /// # Safety
 ///
 /// `ExecPage` owns the memory returned by `mmap` and releases it in `Drop`.
@@ -311,7 +311,6 @@ impl ExecPageManager {
 }
 
 impl Default for ExecPageManager {
-    
     fn default() -> Self {
         Self::new(0)
     }

@@ -87,7 +87,10 @@ pub unsafe fn handle_request<S: Read + Seek>(process_i: usize, schedular: &mut S
             result[8..16].copy_from_slice(&b);
             result[16..24].copy_from_slice(&c);
 
-            info!("Process `{}` exited with exit code: `{}`", process.pid, exit_code);
+            info!(
+                "Process `{}` exited with exit code: `{}`",
+                process.pid, exit_code
+            );
             schedular.process_registry.remove(process_i);
         }
         ProcessRequestTag::ProcSelf => {

@@ -28,7 +28,7 @@ pub enum FunctionType {
 }
 
 bitflags! {
-    #[derive(Debug)]
+    #[derive(Debug, Clone, Copy)]
     pub struct FunctionFlags: u32 {
         const ENTRY         = 1 << 0;
         const EXPORTED      = 1 << 1;
@@ -38,7 +38,7 @@ bitflags! {
     }
 }
 
-#[derive(Debug, BinRead, BinWrite)]
+#[derive(Debug, BinRead, BinWrite, Clone, Copy)]
 pub struct FunctionDescriptor {
     pub symbol: u32,
     pub code_offset: u64,
