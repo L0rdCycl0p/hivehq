@@ -18,7 +18,7 @@ use std::alloc::{Layout, alloc, dealloc};
 
 use crate::{
     error::HiveError,
-    runtime::schedular::{api::ProcessRequest, context::HiveContext},
+    runtime::scheduler::{api::ProcessRequest, context::HiveContext},
 };
 
 use super::Pid;
@@ -159,7 +159,7 @@ impl Stack {
         pid: u32,
         size: usize,
         process_request_ptr: *mut ProcessRequest,
-        schedular_context_ptr: *mut HiveContext,
+        scheduler_context_ptr: *mut HiveContext,
         process_context_ptr: *mut HiveContext,
     ) -> Result<StackRegion, HiveError> {
         unsafe {
@@ -175,7 +175,7 @@ impl Stack {
 
             *(rsp as *mut u64) = process_request_ptr as u64;
 
-            *((rsp + 8) as *mut u64) = schedular_context_ptr as u64;
+            *((rsp + 8) as *mut u64) = scheduler_context_ptr as u64;
 
             *((rsp + 16) as *mut u64) = process_context_ptr as u64;
             Ok(stack)

@@ -35,7 +35,7 @@
 | `D3 /7` | `SAR` | `r/m64, CL` | Arithmetic right shift by CL.            |
 | `C1 /0 ib` | `ROL` | `r/m64, imm8` | Rotate left.                             |
 | `C1 /1 ib` | `ROR` | `r/m64, imm8` | Rotate right.                            |
-| `0F 05` | `SYSCALL` | - | Syscall, but the syscall goes to the schedular
+| `0F 05` | `SYSCALL` | - | Syscall, but the syscall goes to the scheduler
 | `0F BE /r` | `MOVSX` | `r64, r/m8` | Sign-extend 8-bit value.                                                                                                                                         |
 | `0F BF /r` | `MOVSX` | `r64, r/m16` | Sign-extend 16-bit value.                                                                                                                                        |
 | `0F B6 /r` | `MOVZX` | `r64, r/m8` | Zero-extend 8-bit value.                                                                                                                                         |

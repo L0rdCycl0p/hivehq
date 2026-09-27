@@ -47,6 +47,7 @@ log = "0.4.34"
 env_logger = {version = "0.11.11", optional = true}
 colog = {version = "1.4.0", optional = true}
 static_assertions = "1.1.0"
+crossbeam = "0.8.5"
 [profile.dbg]
 inherits = "dev"
 

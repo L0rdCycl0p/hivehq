@@ -56,4 +56,16 @@ pub enum HiveError {
 
     #[error("RET on empty stack")]
     RetOnEmptyStack,
+
+    #[error("PID not found")]
+    PidNotFound,
+
+    #[error("PID already free")]
+    PidAlreadyFree,
+
+    #[error("Queue is full: Hive's local process queue only supports up to 2^16 processes")]
+    QueueIsFull,
+
+    #[error("Unknown")]
+    Unknown(Option<&'static str>)
 }

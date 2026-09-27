@@ -19,14 +19,15 @@ use std::{
     sync::Arc,
 };
 
-use parking_lot::RwLock;
-
+use crossbeam::queue::ArrayQueue;
+use parking_lot::{Mutex, RwLock};
+type ProcessRef = Arc<Mutex<ProcessRegistryEntry>>;
 use crate::{
     error::HiveError,
     parser::LoadedFile,
-    runtime::{load_exec::ExecPageManager, schedular::ProcessRegistryEntry},
+    runtime::{load_exec::ExecPageManager, scheduler::ProcessRegistryEntry},
 };
-/// The schedulars shares this struct
+/// The schedulers shares this struct
 pub struct Manager<S: Read + Seek> {
     /// Shared `ExecPageManager`
     pub exec_page_manager: RwLock<ExecPageManager>,
@@ -34,18 +35,31 @@ pub struct Manager<S: Read + Seek> {
     pub pids: RwLock<Vec<PidSlot>>,
     /// Shared loaded file
     pub loaded_file: RwLock<LoadedFile<S>>,
+    pub process_queue: ArrayQueue<ProcessRef>,
 }
 
 pub enum PidSlot {
     Unused,
-    Used(Arc<ProcessRegistryEntry>),
+    Used(ProcessRef),
+}
+
+impl PidSlot {
+    pub fn deconstruct<S: Read + Seek>(mut self) {
+        match self {
+            Self::Unused => (),
+            Self::Used(mutex) => {
+                drop(mutex);
+                self = Self::Unused;
+            }
+        }
+    }
 }
 
 impl<S: Read + Seek> Manager<S> {
     /// Allocates a new pid to a process
     /// # Errors
     /// - `HiveError::NoPidsAvailable` if no pids are available
-    pub fn allocate_pid(&self, process: Arc<ProcessRegistryEntry>) -> Result<u32, HiveError> {
+    pub fn allocate_pid(&self, process: ProcessRef) -> Result<u32, HiveError> {
         let mut pids = self.pids.write();
 
         for (pid, slot) in pids.iter_mut().enumerate() {
@@ -61,5 +75,25 @@ impl<S: Read + Seek> Manager<S> {
         }
         pids.push(PidSlot::Used(process));
         Ok(pid as u32)
+    }
+
+    pub fn free_pid(&self, pid: u32) -> Result<(), HiveError> {
+        let pids = self.pids.read();
+
+        let proc = pids.get(pid as usize).ok_or(HiveError::PidNotFound)?;
+        match proc {
+            PidSlot::Unused => return Err(HiveError::PidAlreadyFree),
+            PidSlot::Used(mutex) => {
+                let mut proc = mutex.lock();
+                proc.state = super::scheduler::ProcessState::Dead;
+            }
+        }
+        drop(pids);
+        let mut pids = self.pids.write();
+
+        let proc = pids.get_mut(pid as usize).ok_or(HiveError::PidNotFound)?;
+        *proc = PidSlot::Unused;
+        drop(pids);
+        Ok(())
     }
 }

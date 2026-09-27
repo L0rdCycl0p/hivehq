@@ -16,14 +16,14 @@
 
 use std::io::{Read, Seek};
 
-use crate::{parser::LoadedFile, runtime::schedular::Schedular};
+use crate::{parser::LoadedFile, runtime::scheduler::Scheduler};
 
 pub mod load_exec;
 pub mod manager;
 pub mod runner;
-pub mod schedular;
+pub mod scheduler;
 
 pub struct Runtime<S: Read + Seek> {
-    pub schedulars: Vec<Schedular<S>>,
+    pub schedulers: Vec<Scheduler<S>>,
     pub loaded_file: LoadedFile<S>,
 }

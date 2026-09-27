@@ -16,6 +16,7 @@
 
 use chrono::Utc;
 use log::{info, warn};
+use parking_lot::Mutex;
 use static_assertions::assert_impl_all;
 use std::{
     collections::VecDeque,
@@ -38,19 +39,18 @@ use crate::{
     jit::jit_function,
     runtime::{
         load_exec::{FunctionId, LoadedFunc},
-        manager::Manager,
-        schedular::{
+        manager::{Manager, PidSlot},
+        scheduler::{
             api::ProcessRequestTag,
             context::{HiveContext, swapcontext},
-            request_handler::handle_request,
         },
     },
 };
 
 pub type Pid = u32;
 
-pub struct Schedular<S: Read + Seek> {
-    pub process_registry: Vec<ProcessRegistryEntry>,
+pub struct Scheduler<S: Read + Seek> {
+    //pub process_registry: Vec<ProcessRegistryEntry>,
     pub context: HiveContext,
     pub stack: Stack,
     pub manager: Arc<Manager<S>>,
@@ -83,36 +83,37 @@ pub enum ProcessState {
     WaitingRecv { dst: u64 },
     WaitingFD { fd: RawFd },
     Sleep { end: i64 },
+    Dead,
 }
-impl<S: Read + Seek> Schedular<S> {
+impl<S: Read + Seek> Scheduler<S> {
     pub fn new(manager: Arc<Manager<S>>, stack_size: usize) -> Result<Self, HiveError> {
         Ok(Self {
-            process_registry: Vec::with_capacity(100),
+            //process_registry: Vec::with_capacity(100),
             context: HiveContext::default(),
             stack: Stack::new(stack_size)?,
             manager,
         })
     }
 }
-impl<S: Read + Seek> Schedular<S> {
-    pub unsafe fn schedular_run(&mut self) {
+impl<S: Read + Seek> Scheduler<S> {
+    pub unsafe fn scheduler_run(&mut self) -> Result<(), HiveError> {
         unsafe {
             gdb_marker!(sched_run);
 
-            loop {
-                if self.process_registry.is_empty() {
-                    warn!("All processes are done");
-                    break;
-                }
-
-                for i in 0..self.process_registry.len() {
-                    let process = self.process_registry.get_unchecked_mut(i);
-
+            while !self.manager.process_queue.is_empty() {
+                dbg!(&self.manager.process_queue.is_empty());
+                if let Some(p) = self.manager.process_queue.pop() {
+                    let mut process = p.lock();
                     match process.state {
                         ProcessState::Running => {}
 
                         ProcessState::WaitingRecv { dst } => {
                             let Some(msg) = process.mailbox.pop_front() else {
+                                drop(process);
+                                self.manager
+                                    .process_queue
+                                    .push(p)
+                                    .map_err(|_| HiveError::QueueIsFull)?;
                                 continue;
                             };
 
@@ -130,6 +131,16 @@ impl<S: Read + Seek> Schedular<S> {
                         }
 
                         ProcessState::Sleep { .. } => {
+                            drop(process);
+                            self.manager
+                                .process_queue
+                                .push(p)
+                                .map_err(|_| HiveError::QueueIsFull)?;
+                            continue;
+                        }
+                        ProcessState::Dead => {
+                            drop(process);
+                            drop(p);
                             continue;
                         }
                     }
@@ -138,16 +149,21 @@ impl<S: Read + Seek> Schedular<S> {
 
                     swapcontext(&mut self.context, &process.process.context);
 
-                    handle_request(i, self);
+                    self.handle_request(&mut process)?;
+                    drop(process);
+                    self.manager
+                        .process_queue
+                        .push(p)
+                        .map_err(|_| HiveError::QueueIsFull)?;
+                } else {
+                    return Err(HiveError::Unknown(None))
                 }
             }
+            warn!("All processes are done");
         }
+        Ok(())
     }
-    pub unsafe fn new_process(
-        &mut self,
-        pid: u32,
-        function_id: FunctionId,
-    ) -> Result<(), HiveError> {
+    pub unsafe fn new_process(&mut self, function_id: FunctionId) -> Result<(), HiveError> {
         unsafe {
             let (code_offset, code_size, frame_size) = {
                 let loaded_file = self.manager.loaded_file.read();
@@ -204,26 +220,30 @@ impl<S: Read + Seek> Schedular<S> {
             };
 
             let mut process = ProcessRegistryEntry {
-                pid,
+                pid: 0,
                 stack_frames: Vec::with_capacity(5),
                 process: Box::new(process),
                 state: ProcessState::Running,
                 mailbox: VecDeque::new(),
             };
-
+            let process = Arc::new(Mutex::new(process));
+            let pid = self.manager.allocate_pid(process.clone())?;
+            let mut process_guard = process.lock();
+            process_guard.pid = pid;
             let frame = self.stack.new_proc_stack(
                 pid,
                 frame_size as usize,
-                &raw mut process.process.request,
+                &raw mut process_guard.process.request,
                 &raw mut self.context,
-                &raw mut process.process.context,
+                &raw mut process_guard.process.context,
             )?;
             let frame = CallRetStack {
                 stack_region: frame,
                 function: loaded_func,
             };
-            process.stack_frames.push(frame);
-            self.process_registry.push(process);
+            process_guard.stack_frames.push(frame);
+            drop(process_guard);
+            self.manager.process_queue.push(process);
 
             Ok(())
         }
@@ -275,7 +295,10 @@ impl<S: Read + Seek> Schedular<S> {
             stack_region: frame,
             function: loaded_func,
         };
-        self.process_registry[pid as usize].stack_frames.push(frame);
+        match &self.manager.pids.read()[pid as usize] {
+            PidSlot::Unused => todo!(),
+            PidSlot::Used(mutex) => mutex.lock().stack_frames.push(frame),
+        };
 
         // Initialize frame/function arguments here.
         let _ = function_id;
@@ -284,13 +307,18 @@ impl<S: Read + Seek> Schedular<S> {
     }
 
     pub fn return_function(&mut self, pid: Pid) -> Result<(), HiveError> {
-        let process = &mut self.process_registry[pid as usize];
+        match &self.manager.pids.read()[pid as usize] {
+            PidSlot::Unused => todo!(),
+            PidSlot::Used(mutex) => {
+                let frame = mutex
+                    .lock()
+                    .stack_frames
+                    .pop()
+                    .ok_or(HiveError::RetOnEmptyStack)?;
 
-        let frame = process
-            .stack_frames
-            .pop().ok_or(HiveError::RetOnEmptyStack)?;
-
-        self.stack.free(frame.stack_region.start)?;
-        Ok(())
+                self.stack.free(frame.stack_region.start)?;
+                Ok(())
+            }
+        }
     }
 }

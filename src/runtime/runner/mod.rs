@@ -14,24 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+use crossbeam::queue::ArrayQueue;
 use parking_lot::RwLock;
 
 use crate::gdb_marker;
-use crate::jit::jit_function;
-use crate::jit::parser::Parser;
 use crate::parser::LoadedFile;
 use crate::parser::load_file::load_file_by_data;
 use crate::runtime::manager::Manager;
 use crate::{
     error::HiveError,
-    jit::{opcode::Opcode, x86_64::jit_x86_64},
     runtime::{
         load_exec::{ExecPageManager, FunctionId},
-        schedular::{
-            Process, Schedular,
-            api::{ProcessRequest, ProcessRequestTag},
-            context::HiveContext,
-        },
+        scheduler::Scheduler,
     },
 };
 use std::io::{Read, Seek, SeekFrom};
@@ -60,18 +54,19 @@ pub fn run_with_loaded_file<S: Read + Seek>(
             exec_page_manager: RwLock::new(exec_page_manager),
             pids: RwLock::new(Vec::new()),
             loaded_file,
+            process_queue: ArrayQueue::new(1usize << 16),
         };
         let manager = Arc::new(manager);
-        let mut schedular = Schedular::new(manager, STACK_SIZE)?;
+        let mut scheduler = Scheduler::new(manager, STACK_SIZE)?;
 
-        unsafe { schedular.new_process(0, FunctionId(init_func_id))? };
+        unsafe { scheduler.new_process(FunctionId(init_func_id))? };
 
         // ------------------------------------------------------------
         // Run
         // ------------------------------------------------------------
 
         unsafe {
-            schedular.schedular_run();
+            scheduler.scheduler_run()?;
         }
         gdb_marker!(runner_run_with_init_func_end);
         Ok(())

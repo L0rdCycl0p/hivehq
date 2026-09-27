@@ -69,8 +69,8 @@ proc.exit 1
 
 asm
 _entry:
-    ;; schedular_request_ptr = [rsp+0] = rsp
-    ;; schedular_context_ptr = [rsp+8]
+    ;; scheduler_request_ptr = [rsp+0] = rsp
+    ;; scheduler_context_ptr = [rsp+8]
     ;; process_context_ptr = [rsp+16]
     ;; swap_context_func_addr = [rsp+24]
     ;; param0 = [rsp+32]
