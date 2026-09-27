@@ -60,14 +60,14 @@ pub fn run_with_loaded_file<S: Read + Seek>(
         #[allow(clippy::read_zero_byte_vec)]
         let _ = source.read_exact(&mut buf);
         let opcodes = Parser::new(&buf).parse()?;
-        run_with_init_func(opcodes, loaded_file)
+        run_with_init_func(&opcodes, loaded_file)
     } else {
         Err(HiveError::NoSourceAvailable)
     }
 }
 /// # Panics
 pub fn run_with_init_func<S: Read + Seek>(
-    opcodes: Box<[Opcode]>,
+    opcodes: &[Opcode],
     loaded_file: LoadedFile<S>,
 ) -> Result<(), HiveError> {
     let init_func_id = loaded_file.header.entry_point;
