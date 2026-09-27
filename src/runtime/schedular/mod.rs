@@ -286,7 +286,9 @@ impl<S: Read + Seek> Schedular<S> {
     pub fn return_function(&mut self, pid: Pid) -> Result<(), HiveError> {
         let process = &mut self.process_registry[pid as usize];
 
-        let frame = process.stack_frames.pop().expect("RET on empty stack");
+        let frame = process
+            .stack_frames
+            .pop().ok_or(HiveError::RetOnEmptyStack)?;
 
         self.stack.free(frame.stack_region.start)?;
         Ok(())

@@ -53,4 +53,7 @@ pub enum HiveError {
 
     #[error("")]
     LayoutError(#[from] LayoutError),
+
+    #[error("RET on empty stack")]
+    RetOnEmptyStack,
 }
