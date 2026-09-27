@@ -16,6 +16,7 @@
 
 use chrono::Utc;
 use log::{info, warn};
+use static_assertions::assert_impl_all;
 use std::{
     collections::VecDeque,
     io::{Read, Seek, SeekFrom},

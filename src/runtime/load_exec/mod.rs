@@ -23,17 +23,30 @@ use libc::{
     MAP_ANONYMOUS, MAP_FAILED, MAP_PRIVATE, PROT_EXEC, PROT_READ, PROT_WRITE, mmap, mprotect,
     munmap,
 };
+use static_assertions::assert_impl_all;
 
 const PAGE_SIZE: usize = 4096;
 /// The `FunctionId`
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunctionId(pub u32);
-/// A struct that represents a loaded Page in memory
+/// A memory page containing JIT-compiled executable code.
+/// 
+/// # Safety
+///
+/// `ExecPage` owns the memory returned by `mmap` and releases it in `Drop`.
+/// The mapped memory is not accessed through Rust references, and mutable
+/// access to the page is exclusively controlled by `ExecPageManager`.
 pub struct ExecPage {
     ptr: *mut u8,
     size: usize,
 }
+// SAFETY: The memory is owned by `ExecPage` and mutable access is controlled
+// by `ExecPageManager`.
+unsafe impl Send for ExecPage {}
 
+// SAFETY: Sharing `ExecPage` does not provide unsynchronized mutable access
+// to the mapped memory.
+unsafe impl Sync for ExecPage {}
 impl ExecPage {
     fn new() -> io::Result<Self> {
         let ptr = unsafe {
@@ -86,7 +99,14 @@ impl Drop for ExecPage {
     }
 }
 
-/// A struct that represents a loaded func
+/// A loaded JIT-compiled function.
+///
+/// # Safety
+///
+/// The executable memory referenced by `ptr` is owned by the `Arc<ExecPage>`
+/// values stored in `pages`. The memory remains valid for the lifetime of
+/// this `LoadedFunc`. Access to the underlying memory is controlled by the
+/// `ExecPageManager`.
 pub struct LoadedFunc {
     pub id: FunctionId,
     pub ptr: *mut u8,
@@ -94,7 +114,13 @@ pub struct LoadedFunc {
 
     pages: Box<[Arc<ExecPage>]>,
 }
+// SAFETY: The executable memory is owned by `pages` and remains valid for
+// the lifetime of the `LoadedFunc`.
+unsafe impl Send for LoadedFunc {}
 
+// SAFETY: `LoadedFunc` does not provide unsynchronized mutable access to the
+// executable memory.
+unsafe impl Sync for LoadedFunc {}
 impl LoadedFunc {
     /// getter for `self.ptr`
     #[must_use]
@@ -133,6 +159,7 @@ pub struct ExecPageManager {
     pages: Vec<ManagedPage>,
     functions: Vec<Option<Weak<LoadedFunc>>>,
 }
+assert_impl_all!(ExecPageManager: Send, Sync);
 
 impl ExecPageManager {
     /// Creates a new `ExecPageManager`
