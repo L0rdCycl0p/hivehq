@@ -22,13 +22,13 @@ pub mod x86_64;
 #[must_use]
 pub fn jit_function(code: Box<[u8]>) -> Box<[u8]> {
     let parsed = parser::parse(code).unwrap();
-    gen_code(&parsed).0
+    gen_code(&parsed)
 }
 
 cfg_select! {
     feature = "x86_64" => {
-
-        fn gen_code(code: &[opcode::Opcode]) -> (Box<[u8]>, Box<[x86_64::ContextSwitchPatch]>) {
+        #[inline]
+        fn gen_code(code: &[opcode::Opcode]) -> Box<[u8]> {
             x86_64::jit_x86_64(code)
         }
     }

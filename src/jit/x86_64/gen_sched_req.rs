@@ -29,7 +29,7 @@ pub fn gen_sched_req(
     req_op: u8,
     operands: &[RequestPayloadOperand],
     mut offset: usize,
-) -> (Vec<u8>, usize, ContextSwitchPatch) {
+) -> (Vec<u8>, usize) {
     let mut code = Vec::new();
 
     // mov rdi, QWORD PTR [rsp + 0]
@@ -46,13 +46,13 @@ pub fn gen_sched_req(
 
     offset += code.len();
 
-    let (context_switch_code, patch) = gen_context_switch(offset);
+    let context_switch_code = gen_context_switch(offset);
 
     offset += context_switch_code.len();
 
     code.extend_from_slice(&context_switch_code);
 
-    (code, offset, patch)
+    (code, offset)
 }
 
 fn gen_request_operand(code: &mut Vec<u8>, request_operand: &RequestPayloadOperand) {

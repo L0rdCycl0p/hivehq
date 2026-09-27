@@ -21,26 +21,21 @@ use crate::jit::{
     x86_64::translate_opcode::{TranslatedOpcode, translate_opcode},
 };
 mod build_instruction;
-mod encode_rm;
 mod gen_context_switch;
 mod gen_load_operand;
 mod gen_sched_req;
 mod translate_opcode;
 pub use gen_context_switch::ContextSwitchPatch;
 #[must_use]
-pub fn jit_x86_64(code: &[opcode::Opcode]) -> (Box<[u8]>, Box<[ContextSwitchPatch]>) {
+pub fn jit_x86_64(code: &[opcode::Opcode]) -> Box<[u8]> {
     let mut offset = 0;
     let mut jit_code = Vec::with_capacity(50);
-    let mut patches = Vec::with_capacity(10);
     for opc in code {
-        let TranslatedOpcode(c, o, p) = translate_opcode(opc, offset);
+        let TranslatedOpcode(c, o) = translate_opcode(opc, offset);
         offset += o;
         jit_code.extend(c);
-        if let Some(p) = p {
-            patches.push(p);
-        }
     }
-    (jit_code.into_boxed_slice(), patches.into_boxed_slice())
+    jit_code.into_boxed_slice()
 }
 
 #[test]
@@ -59,7 +54,7 @@ fn test_jit() {
             reason: Operand::Register(Register::Rax),
         },
     ]);
-    let (jit_code, patches) = jit_x86_64(&opcodes);
+    let jit_code = jit_x86_64(&opcodes);
     for (index, opcode) in jit_code.iter().enumerate() {
         println!("{opcode:#04x}");
     }

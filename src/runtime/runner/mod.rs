@@ -80,7 +80,7 @@ pub fn run_with_init_func<S: Read + Seek>(
 
     let mut exec_page_manager = ExecPageManager::new(1);
 
-    let loaded_func = exec_page_manager.load_func(FunctionId(0), code.0)?;
+    let loaded_func = exec_page_manager.load_func(FunctionId(0), code)?;
     // ------------------------------------------------------------
     // Initial CPU context
     // ------------------------------------------------------------

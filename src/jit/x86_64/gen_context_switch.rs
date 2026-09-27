@@ -21,7 +21,7 @@ pub struct ContextSwitchPatch {
 }
 
 #[must_use]
-pub fn gen_context_switch(offset: usize) -> (Vec<u8>, ContextSwitchPatch) {
+pub fn gen_context_switch(offset: usize) -> Vec<u8> {
     let context_switch_addr = hive_context_switch as *const () as usize;
     let mut code = Vec::new();
 
@@ -36,11 +36,9 @@ pub fn gen_context_switch(offset: usize) -> (Vec<u8>, ContextSwitchPatch) {
     // 48 8D 0D xx xx xx xx
     //
     // xx xx xx xx = Patch
-    let lea_start = code.len();
 
     code.extend_from_slice(&[0x48, 0x8D, 0x0D, 0x00, 0x00, 0x00, 0x00]);
 
-    let rip_offset = code.len();
 
     // mov rax, <context_switch_addr>
     code.extend_from_slice(&[0x48, 0xB8]);
@@ -49,14 +47,7 @@ pub fn gen_context_switch(offset: usize) -> (Vec<u8>, ContextSwitchPatch) {
     // jmp rax
     code.extend_from_slice(&[0xFF, 0xE0]);
 
-    (
-        code,
-        ContextSwitchPatch {
-            patch_offset: offset + lea_start + 3,
-
-            rip_offset: offset + rip_offset,
-        },
-    )
+    code
 }
 
 pub fn patch_context_switches(address: usize, patches: &[ContextSwitchPatch]) {
