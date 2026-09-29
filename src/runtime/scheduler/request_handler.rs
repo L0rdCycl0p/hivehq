@@ -126,6 +126,7 @@ impl<S: Read + Seek> Scheduler<S> {
                 result[16..24].copy_from_slice(&c);
                 let pid = process.pid;
                 drop(process);
+                #[cfg(feature = "cfg_log_proc_exit")]
                 info!(
                     "Process `{}` exited with exit code: `{}`",
                     pid, exit_code
