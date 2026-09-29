@@ -21,6 +21,7 @@ use std::{
 
 use libc::{calloc, free, malloc, realloc};
 use log::info;
+use parking_lot::{MutexGuard};
 
 use crate::{
     debug::gdb_marker, error::HiveError, runtime::{load_exec::FunctionId, scheduler::{
@@ -33,7 +34,7 @@ impl<S: Read + Seek> Scheduler<S> {
     /// Process Request has to be valid.
     pub unsafe fn handle_request(
         &mut self,
-        process: &mut ProcessRegistryEntry,
+        mut process: MutexGuard<'_, ProcessRegistryEntry>,
     ) -> Result<(), HiveError> {
         gdb_marker!(sched_req_handler_entry);
         let req = &process.process.request.request;
@@ -123,12 +124,13 @@ impl<S: Read + Seek> Scheduler<S> {
                 result[0..8].copy_from_slice(&a);
                 result[8..16].copy_from_slice(&b);
                 result[16..24].copy_from_slice(&c);
-
+                let pid = process.pid;
+                drop(process);
                 info!(
                     "Process `{}` exited with exit code: `{}`",
-                    process.pid, exit_code
+                    pid, exit_code
                 );
-                self.manager.free_pid(process.pid)?;
+                self.manager.free_pid(pid)?;
             }
             ProcessRequestTag::ProcSelf => {
                 let param = unsafe { param.proc_self };

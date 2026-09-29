@@ -97,7 +97,6 @@ impl<S: Read + Seek> Scheduler<S> {
             gdb_marker!(sched_run);
 
             while !self.manager.process_queue.is_empty() {
-                dbg!(&self.manager.process_queue.is_empty());
                 if let Some(p) = self.manager.process_queue.pop() {
                     let mut process = p.lock();
                     match process.state {
@@ -122,6 +121,7 @@ impl<S: Read + Seek> Scheduler<S> {
                             todo!();
                         }
 
+
                         ProcessState::Sleep { end } if Utc::now().timestamp_micros() >= end => {
                             process.state = ProcessState::Running;
                         }
@@ -145,8 +145,7 @@ impl<S: Read + Seek> Scheduler<S> {
 
                     swapcontext(&mut self.context, &process.process.context);
 
-                    self.handle_request(&mut process)?;
-                    drop(process);
+                    self.handle_request(process)?;
                     self.manager
                         .process_queue
                         .push(p)
