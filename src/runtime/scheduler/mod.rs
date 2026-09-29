@@ -15,12 +15,10 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use chrono::Utc;
-use crossbeam::queue::{ArrayQueue, SegQueue};
-use log::{info, warn};
+use crossbeam::queue::SegQueue;
+use log::warn;
 use parking_lot::Mutex;
-use static_assertions::assert_impl_all;
 use std::{
-    collections::VecDeque,
     io::{Read, Seek, SeekFrom},
     os::{fd::RawFd, raw::c_void},
     sync::Arc,
@@ -65,7 +63,7 @@ pub struct ProcessRegistryEntry {
 
     pub process: Box<Process>,
     pub state: ProcessState,
-    /// SegQueue of ptr to data
+    /// `SegQueue` of ptr to data
     pub mailbox: SegQueue<MailBody>, 
 }
 
@@ -294,7 +292,7 @@ impl<S: Read + Seek> Scheduler<S> {
         match &self.manager.pids.read()[pid as usize] {
             PidSlot::Unused => todo!(),
             PidSlot::Used(mutex) => mutex.lock().stack_frames.push(frame),
-        };
+        }
 
         // Initialize frame/function arguments here.
         let _ = function_id;

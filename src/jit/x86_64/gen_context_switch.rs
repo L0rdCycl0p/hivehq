@@ -21,7 +21,7 @@ pub struct ContextSwitchPatch {
 }
 
 #[must_use]
-pub fn gen_context_switch(offset: usize) -> Vec<u8> {
+pub fn gen_context_switch(_offset: usize) -> Vec<u8> {
     let context_switch_addr = hive_context_switch as *const () as usize;
     let mut code = Vec::new();
 

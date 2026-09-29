@@ -15,31 +15,24 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use std::{
-    arch::asm, io::{Read, Seek}, os::raw::c_void,
+    arch::asm, io::{Read, Seek},
 };
 
-use libc::{calloc, free, malloc, realloc, syscall};
-use log::info;
 use parking_lot::MutexGuard;
 
 use crate::{
-    debug::gdb_marker,
     error::HiveError,
-    runtime::{
-        load_exec::FunctionId,
-        scheduler::{
-            ProcessRegistryEntry, ProcessState, Scheduler,
-            api::{MailBody, ProcessRequestParam, ProcessRequestTag},
+    runtime::scheduler::{
+            ProcessRegistryEntry, Scheduler,
         },
-    },
 };
 impl<S: Read + Seek> Scheduler<S> {
     /// # Safety
     /// Syscall has to be valid.
     pub unsafe fn handle_syscall(
         &mut self,
-        mut process: MutexGuard<'_, ProcessRegistryEntry>,
-    ) -> Result<(), HiveError> {
+        process: MutexGuard<'_, ProcessRegistryEntry>,
+    ) -> Result<(), HiveError> { unsafe {
         // TODO!!!
         asm!(
             "mov rax, {rax}",
@@ -60,5 +53,5 @@ impl<S: Read + Seek> Scheduler<S> {
             
         );
         Ok(())
-    }
+    }}
 }

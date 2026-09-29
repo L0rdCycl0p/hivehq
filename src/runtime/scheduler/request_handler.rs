@@ -19,8 +19,8 @@ use std::{
     os::raw::c_void,
 };
 
-use chrono::{DateTime, Local};
-use libc::{calloc, free, malloc, realloc, syscall};
+use chrono::Local;
+use libc::{calloc, free, malloc, realloc};
 use log::info;
 use parking_lot::MutexGuard;
 
@@ -41,7 +41,7 @@ impl<S: Read + Seek> Scheduler<S> {
     pub unsafe fn handle_request(
         &mut self,
         mut process: MutexGuard<'_, ProcessRegistryEntry>,
-    ) -> Result<(), HiveError> {
+    ) -> Result<(), HiveError> { unsafe {
         gdb_marker!(sched_req_handler_entry);
         let req = &process.process.request.request;
         let param = process.process.request.params;
@@ -73,13 +73,13 @@ impl<S: Read + Seek> Scheduler<S> {
             }
             ProcessRequestTag::MailPeek => {
                 let param = unsafe { param.mail_recv };
-                let dst = param as *mut MailBody;
+                let _dst = param as *mut MailBody;
                 todo!();
             }
             ProcessRequestTag::MailTryRecv => {
                 let param = unsafe { param.mail_recv };
                 let dst = param as *mut MailBody;
-                unsafe { *dst = process.mailbox.pop().unwrap_or(MailBody::default()) };
+                unsafe { *dst = process.mailbox.pop().unwrap_or_default() };
             }
             ProcessRequestTag::MailRecv => {
                 let param = unsafe { param.mail_recv };
@@ -124,7 +124,7 @@ impl<S: Read + Seek> Scheduler<S> {
             ProcessRequestTag::ProcKill => {
                 let param = unsafe { param.proc_kill };
                 let pids = self.manager.pids.write();
-                if let Some(crate::runtime::manager::PidSlot::Used(p)) =
+                if let Some(crate::runtime::manager::PidSlot::Used(_p)) =
                     pids.get(param.pid as usize)
                 {}
             }
@@ -199,7 +199,7 @@ impl<S: Read + Seek> Scheduler<S> {
             ProcessRequestTag::Ret => {
                 let _param = unsafe { param.ret };
             }
-        };
+        }
         Ok(())
-    }
+    }}
 }

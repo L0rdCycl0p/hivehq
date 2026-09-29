@@ -18,7 +18,6 @@ use crate::jit::{
     opcode::{MemoryOperand, Opcode, Operand, Register, ShiftAmount},
     x86_64::{
         build_instruction::{InstructionEncoding, build_instruction},
-        gen_context_switch::ContextSwitchPatch,
         gen_sched_req::gen_sched_req,
     },
 };

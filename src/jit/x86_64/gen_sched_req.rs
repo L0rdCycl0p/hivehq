@@ -17,7 +17,7 @@
 use crate::jit::{
     opcode::{Operand, Register},
     x86_64::{
-        gen_context_switch::{ContextSwitchPatch, gen_context_switch},
+        gen_context_switch::gen_context_switch,
         gen_load_operand::gen_load_operand,
     },
 };
