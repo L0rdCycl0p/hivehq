@@ -45,6 +45,7 @@ impl Stack {
     /// Creates a new Hive Stack
     /// # Errors
     /// - `HiveError::CanNotAllocateStack`
+    /// - `HiveError::LayoutError`
     pub fn new(size: usize) -> Result<Self, HiveError> {
         if size == 0 {
             return Err(HiveError::CanNotAllocateStack);

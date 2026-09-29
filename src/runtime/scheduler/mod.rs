@@ -81,6 +81,9 @@ pub enum ProcessState {
     Dead,
 }
 impl<S: Read + Seek> Scheduler<S> {
+    /// # Errors
+    /// - `HiveError::CanNotAllocateStack`
+    /// - `HiveError::LayoutError`
     pub fn new(manager: Arc<Manager<S>>, stack_size: usize) -> Result<Self, HiveError> {
         Ok(Self {
             //process_registry: Vec::with_capacity(100),
@@ -91,6 +94,10 @@ impl<S: Read + Seek> Scheduler<S> {
     }
 }
 impl<S: Read + Seek> Scheduler<S> {
+    /// # Safety
+    /// This function should only be called by the hive runtime.
+    /// Manually Calls should pay attention
+    /// # Errors
     pub unsafe fn scheduler_run(&mut self) -> Result<(), HiveError> {
         unsafe {
             gdb_marker!(sched_run);
@@ -243,6 +250,10 @@ impl<S: Read + Seek> Scheduler<S> {
             Ok(pid)
         }
     }
+
+    /// # Errors
+    /// - `HiveError::NoSourceAvailable`
+    /// - `HiveError::StackExhausted`
     pub fn call_function(
         &mut self,
         pid: Pid,
@@ -252,8 +263,8 @@ impl<S: Read + Seek> Scheduler<S> {
         let (code_offset, code_size, frame_size) = {
             let loaded_file = self.manager.loaded_file.read();
 
-            let function = &loaded_file.functions[function_id as usize];
-
+            let function = loaded_file.functions[function_id as usize];
+            drop(loaded_file);
             (
                 function.code_offset,
                 function.code_size,
@@ -299,7 +310,9 @@ impl<S: Read + Seek> Scheduler<S> {
         let _ = args;
         Ok(())
     }
-
+    /// # Errors
+    /// - `HiveError::RetOnEmptyStack`
+    /// - `HiveError::AttemptedToFreeUnknownStackFrame`
     pub fn return_function(&mut self, pid: Pid) -> Result<(), HiveError> {
         match &self.manager.pids.read()[pid as usize] {
             PidSlot::Unused => todo!(),
