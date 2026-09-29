@@ -35,6 +35,10 @@ env_logger = [
     "dep:env_logger"
 ]
 
+### HIVE CFG ###
+cfg_syscall_yield = []
+cfg_recall_yield = []
+
 [dependencies]
 thiserror = "2"
 libc = "0.2"

@@ -25,4 +25,6 @@ jobs:
 
       - name: Feluda License Scanner
         uses: anistark/feluda@v1.17.0
-
+        with:
+          project-license: GPL-3.0
+          fail-on-incompatible: true
