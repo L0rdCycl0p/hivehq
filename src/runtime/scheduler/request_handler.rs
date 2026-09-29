@@ -19,15 +19,21 @@ use std::{
     os::raw::c_void,
 };
 
-use libc::{calloc, free, malloc, realloc};
+use chrono::{DateTime, Local};
+use libc::{calloc, free, malloc, realloc, syscall};
 use log::info;
-use parking_lot::{MutexGuard};
+use parking_lot::MutexGuard;
 
 use crate::{
-    debug::gdb_marker, error::HiveError, runtime::{load_exec::FunctionId, scheduler::{
-        ProcessRegistryEntry, ProcessState, Scheduler,
-        api::{MailBody, ProcessRequestParam, ProcessRequestTag},
-    }},
+    debug::gdb_marker,
+    error::HiveError,
+    runtime::{
+        load_exec::FunctionId,
+        scheduler::{
+            ProcessRegistryEntry, ProcessState, Scheduler,
+            api::{MailBody, ProcessRequestParam, ProcessRequestTag},
+        },
+    },
 };
 impl<S: Read + Seek> Scheduler<S> {
     /// # Safety
@@ -43,18 +49,23 @@ impl<S: Read + Seek> Scheduler<S> {
         let param: ProcessRequestParam = unsafe { std::mem::transmute(param) };
         gdb_marker!(sched_req_handler_match);
         match req {
-            ProcessRequestTag::Syscall => todo!(),
-            ProcessRequestTag::Recall => {}
+            ProcessRequestTag::Syscall => {
+                unsafe { self.handle_syscall(process)? };
+            },
+            // YIELD
+            ProcessRequestTag::Recall | ProcessRequestTag::SchedYield | ProcessRequestTag::ProcYield => {}
             ProcessRequestTag::CallWorker => {
-                let param = unsafe {param.call_worker};
+                let param = unsafe { param.call_worker };
                 let pid = unsafe { self.new_process(FunctionId(param.function), param.args)? };
                 unsafe { *(param.dst as *mut u32) = pid };
-            },
+            }
             ProcessRequestTag::Call => {
                 let param = unsafe { param.call };
                 self.call_function(process.pid, param.function, param.args as *const c_void)?;
             }
-            ProcessRequestTag::MailClear => todo!(),
+            ProcessRequestTag::MailClear => {
+                while process.mailbox.pop().is_some() {} // TODO!!! That can be better
+            },
             ProcessRequestTag::MailLen => {
                 let param = unsafe { param.mail_len };
                 let dst = param as *mut u64;
@@ -84,26 +95,31 @@ impl<S: Read + Seek> Scheduler<S> {
                 let param = unsafe { param.mail_send };
                 let pids = self.manager.pids.read();
                 let pid_slot = pids.get(param.pid as usize).ok_or(HiveError::PidNotFound)?;
+                
                 match pid_slot {
                     crate::runtime::manager::PidSlot::Unused => return Err(HiveError::PidNotFound),
                     crate::runtime::manager::PidSlot::Used(mutex) => {
                         mutex.lock().mailbox.push(param.message);
                     }
                 }
+                drop(pids);
             }
             ProcessRequestTag::SchedMigrate => todo!(),
             ProcessRequestTag::SchedCount => todo!(),
             ProcessRequestTag::SchedId => todo!(),
             ProcessRequestTag::SchedWait => todo!(),
             ProcessRequestTag::SchedWake => todo!(),
-            ProcessRequestTag::SchedYield => todo!(),
             ProcessRequestTag::ProcDemonitor => todo!(),
             ProcessRequestTag::ProcMonitor => todo!(),
             ProcessRequestTag::ProcUnlink => todo!(),
             ProcessRequestTag::ProcLink => todo!(),
             ProcessRequestTag::ProcAlive => todo!(),
-            ProcessRequestTag::ProcSleep => todo!(),
-            ProcessRequestTag::ProcYield => todo!(),
+            ProcessRequestTag::ProcSleep => {
+                let start = Local::now().timestamp_micros();
+                let duration = unsafe {param.proc_sleep};
+                let end = start + duration as i64;
+                process.state = ProcessState::Sleep { end};
+            },
             ProcessRequestTag::ProcState => todo!(),
             ProcessRequestTag::ProcKill => {
                 let param = unsafe { param.proc_kill };
@@ -127,10 +143,7 @@ impl<S: Read + Seek> Scheduler<S> {
                 let pid = process.pid;
                 drop(process);
                 #[cfg(feature = "cfg_log_proc_exit")]
-                info!(
-                    "Process `{}` exited with exit code: `{}`",
-                    pid, exit_code
-                );
+                info!("Process `{pid}` exited with exit code: `{exit_code}`");
                 self.manager.free_pid(pid)?;
             }
             ProcessRequestTag::ProcSelf => {
@@ -141,9 +154,8 @@ impl<S: Read + Seek> Scheduler<S> {
             }
             ProcessRequestTag::ProcSpawn => {
                 let param = unsafe { param.proc_spawn };
-                let _args_ptr = param.args as *const c_void;
-                //unsafe { scheduler.add_process(param.function, args_ptr) };
-                todo!()
+                let pid = unsafe { self.new_process(FunctionId(param.function), param.args)? };
+                *(param.dst as *mut u32) = pid;
             }
             ProcessRequestTag::StackFree => todo!(),
             ProcessRequestTag::StackAlloc => todo!(),

@@ -30,6 +30,7 @@ pub mod api;
 pub mod context;
 pub mod request_handler;
 pub mod stack;
+pub mod syscall_handler;
 
 use api::ProcessRequest;
 use stack::{Stack, StackRegion};

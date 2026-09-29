@@ -4,23 +4,23 @@ Hive is a native actor/process runtime inspired by the BEAM, but designed to exe
 
 The core idea is:
 
-> **BEAM-like processes and scheduling, without BEAM VM execution overhead.** 
+> **BEAM-like processes and scheduling, without BEAM VM execution overhead.**
 
 Hive is asynchronous by design. Every Hive Process is represented by a state, and the scheduler executes the work described by that state.
 
----
+______________________________________________________________________
 
 ## 1. Runtime Overview
 
 A Hive runtime consists of:
 
-* **Schedulers** 
-* **Hive Processes** 
-* **Process States** 
-* **Stack Frames** 
-* **Process Heaps** 
-* **JIT/native functions** 
-* **Message passing** 
+- **Schedulers**
+- **Hive Processes**
+- **Process States**
+- **Stack Frames**
+- **Process Heaps**
+- **JIT/native functions**
+- **Message passing**
 
 Conceptually:
 
@@ -38,13 +38,13 @@ Hive Runtime
 │   └── Hive Processes
 │
 └── ...
-````
+```
 
 Schedulers are responsible for executing Hive Processes.
 
 A Hive Process is not an operating-system thread. It is a lightweight runtime process managed by a scheduler.
 
----
+______________________________________________________________________
 
 # 2. Hive Processes
 
@@ -68,7 +68,7 @@ A process does not need a large permanently allocated OS stack. Stack memory is 
 
 This allows Hive to support very large numbers of processes without requiring a large stack allocation for every process.
 
----
+______________________________________________________________________
 
 # 3. Process State
 
@@ -113,7 +113,7 @@ A function does not need to block the scheduler.
 
 Instead, asynchronous operations are represented through process state transitions.
 
----
+______________________________________________________________________
 
 # 4. Scheduler
 
@@ -135,17 +135,17 @@ Scheduler
 
 The scheduler is responsible for:
 
-01. Selecting a runnable process.
-02. Reading its state.
-03. Executing the requested operation.
-04. Allocating stack frames when required.
-05. Executing or JIT-compiling functions.
-06. Updating the process state.
-07. Returning the process to the run queue or another scheduler state.
+1. Selecting a runnable process.
+1. Reading its state.
+1. Executing the requested operation.
+1. Allocating stack frames when required.
+1. Executing or JIT-compiling functions.
+1. Updating the process state.
+1. Returning the process to the run queue or another scheduler state.
 
 The scheduler is therefore the main runtime component connecting Hive's asynchronous process model with native execution.
 
----
+______________________________________________________________________
 
 # 5. Scheduler Stack
 
@@ -165,7 +165,7 @@ Instead, the scheduler manages the execution of their functions through stack fr
 
 This is one of the main differences between Hive Processes and OS threads.
 
----
+______________________________________________________________________
 
 # 6. Stack Frames
 
@@ -203,7 +203,7 @@ Therefore, local variables stored inside a frame must have statically known size
 
 This allows stack frames to be allocated very cheaply.
 
----
+______________________________________________________________________
 
 # 7. Function Execution
 
@@ -240,7 +240,7 @@ Hive does not require a bytecode interpreter for normal function execution.
 
 The goal is for the actual function body to execute as native machine code.
 
----
+______________________________________________________________________
 
 # 8. JIT Execution
 
@@ -265,7 +265,7 @@ After compilation, subsequent executions can directly use the generated native c
 
 This removes the instruction-dispatch overhead normally associated with an interpreter-based VM.
 
----
+______________________________________________________________________
 
 # 9. Static Stack Frames
 
@@ -293,7 +293,7 @@ frame = scheduler.allocate_frame(foo)
 
 The scheduler does not need to dynamically discover the size of every local variable during execution.
 
----
+______________________________________________________________________
 
 # 10. Dynamic Memory
 
@@ -315,7 +315,7 @@ Hive Process
 
 The heap is dynamic and can contain objects whose size is not known when the stack frame is created.
 
----
+______________________________________________________________________
 
 # 11. Dynamic Stack Memory
 
@@ -338,7 +338,7 @@ The dynamically allocated region does not need to have a fixed size such as 16 K
 
 The process can request the amount of memory it actually needs.
 
----
+______________________________________________________________________
 
 # 12. Process Memory Ownership
 
@@ -358,7 +358,7 @@ The process owns the memory required by its execution.
 
 Borrowing rules can additionally be enforced by the language and compiler to prevent invalid references while the process is alive.
 
----
+______________________________________________________________________
 
 # 13. Borrowing
 
@@ -381,7 +381,7 @@ The compiler can ensure that borrowed references do not outlive their valid owne
 
 However, Hive does not require every allocation to have a complex individual garbage-collection lifecycle.
 
----
+______________________________________________________________________
 
 # 14. Process Lifetime
 
@@ -419,7 +419,7 @@ process.state == Dead
         └── release process resources
 ```
 
----
+______________________________________________________________________
 
 # 15. Process Reclamation
 
@@ -429,7 +429,7 @@ The scheduler does not need to scan the entire heap and determine which objects 
 
 Instead:
 
-> **If the process is dead, its process-local memory can be dropped with the process.** 
+> **If the process is dead, its process-local memory can be dropped with the process.**
 
 Conceptually:
 
@@ -454,7 +454,7 @@ This is process-lifetime-based memory reclamation.
 
 It behaves more like an owned memory region than a traditional garbage-collected heap.
 
----
+______________________________________________________________________
 
 # 16. Let It Fail
 
@@ -485,7 +485,7 @@ There is no requirement to manually unwind every allocation in the process heap 
 
 The process itself owns the lifetime of that memory.
 
----
+______________________________________________________________________
 
 # 17. Asynchronous Execution
 
@@ -522,7 +522,7 @@ continue process
 
 A waiting process therefore does not require a continuously executing OS thread.
 
----
+______________________________________________________________________
 
 # 18. Process Scheduling
 
@@ -569,7 +569,7 @@ operation
 new state
 ```
 
----
+______________________________________________________________________
 
 # 19. Message Passing
 
@@ -592,7 +592,7 @@ This allows processes to remain isolated while still supporting BEAM-like concur
 
 Process-local memory remains owned by the process that created it.
 
----
+______________________________________________________________________
 
 # 20. Small Processes
 
@@ -622,7 +622,7 @@ This allows Hive to create large numbers of concurrent processes.
 
 The scheduler provides the execution resources rather than permanently assigning a thread to every process.
 
----
+______________________________________________________________________
 
 # 21. Hive vs. BEAM
 
@@ -667,7 +667,7 @@ Native Machine Code
 CPU
 ```
 
----
+______________________________________________________________________
 
 # 22. Execution Model
 
@@ -709,24 +709,24 @@ The complete execution flow is:
 
 The scheduler therefore acts as the bridge between Hive's process model and native CPU execution.
 
----
+______________________________________________________________________
 
 # 23. Core Design Principles
 
 Hive is built around several core principles:
 
-01. **Processes are cheap.** 
-02. **Processes are asynchronous.** 
-03. **Schedulers own execution resources.** 
-04. **Functions execute using scheduler-managed stack frames.** 
-05. **Normal stack-frame sizes are statically known.** 
-06. **Dynamic memory belongs to the process heap.** 
-07. **Dynamic stack-like allocations can use process-owned memory.** 
-08. **Functions can be JIT-compiled to native code.** 
-09. **Process-local memory is reclaimed when the process dies.** 
-10. **Borrowing provides safety while the process is alive.** 
-11. **Process failure follows the `let it fail` model.** 
-12. **There is no requirement for a traditional tracing GC for process-local memory.** 
+1. **Processes are cheap.**
+1. **Processes are asynchronous.**
+1. **Schedulers own execution resources.**
+1. **Functions execute using scheduler-managed stack frames.**
+1. **Normal stack-frame sizes are statically known.**
+1. **Dynamic memory belongs to the process heap.**
+1. **Dynamic stack-like allocations can use process-owned memory.**
+1. **Functions can be JIT-compiled to native code.**
+1. **Process-local memory is reclaimed when the process dies.**
+1. **Borrowing provides safety while the process is alive.**
+1. **Process failure follows the `let it fail` model.**
+1. **There is no requirement for a traditional tracing GC for process-local memory.**
 
 The resulting architecture can be summarized as:
 
@@ -760,4 +760,4 @@ The resulting architecture can be summarized as:
 
 Hive's fundamental abstraction is therefore:
 
-> **A lightweight asynchronous process whose state is scheduled by a native scheduler and whose functions execute as native code.** 
+> **A lightweight asynchronous process whose state is scheduled by a native scheduler and whose functions execute as native code.**
