@@ -30,7 +30,7 @@ pub enum ProcessRequestTag {
     MailLen = 0x44,
     MailPeek = 0x43,
     MailTryRecv = 0x42,
-    MailRec = 0x41,
+    MailRecv = 0x41,
     MailSend = 0x40,
     SchedMigrate = 0x35,
     SchedCount = 0x34,
@@ -153,7 +153,14 @@ pub struct SchedMigrateParam {
 #[derive(Copy, Clone)]
 pub struct MailSendParam {
     pub pid: u32,
-    pub message: (u64, u64), // len + ptr
+    pub message: MailBody
+}
+
+#[repr(C, packed)]
+#[derive(Copy, Clone, Default)]
+pub struct MailBody {
+    pub len: u64,
+    pub ptr: u64,
 }
 
 #[repr(C, packed)]
@@ -168,8 +175,9 @@ pub struct AsyncParam {
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct CallParam {
-    pub function: u32,
     pub args: u64, // ptr
+    pub dst: u64, // ptr
+    pub function: u32,
 }
 
 #[repr(C, packed)]

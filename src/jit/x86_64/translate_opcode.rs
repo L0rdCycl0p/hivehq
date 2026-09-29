@@ -1124,10 +1124,17 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
         Opcode::ProcessTrap { handler: _ } => todo!(),
         Opcode::Jit { function: _ } => todo!(),
         Opcode::HiveCall {
-            function: _,
-            args: _,
-        } => todo!(),
-        Opcode::CallWorker { worker: _, args: _ } => todo!(),
+            dst,
+            function,
+            args,
+        } => {
+            let (a, b) = gen_sched_req(0x72, &[(args, 1, 8), (dst, 9, 8), (function, 17, 4)], offset);
+            TranslatedOpcode(a, b)
+        }
+        Opcode::CallWorker { dst, worker, args } => {
+            let (a, b) = gen_sched_req(0x72, &[(args, 1, 8), (dst, 9, 8), (worker, 17, 4)], offset);
+            TranslatedOpcode(a, b)
+        }
         Opcode::NativeCall {
             function: _,
             args: _,

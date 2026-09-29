@@ -161,6 +161,7 @@ impl Stack {
         process_request_ptr: *mut ProcessRequest,
         scheduler_context_ptr: *mut HiveContext,
         process_context_ptr: *mut HiveContext,
+        params: u64
     ) -> Result<StackRegion, HiveError> {
         unsafe {
             let stack = self.allocate(pid, size)?;
@@ -170,7 +171,7 @@ impl Stack {
             // [rsp + 0]  = request pointer
             // [rsp + 8]  = scheduler context pointer
             // [rsp + 16] = process context pointer
-
+            // [rsp + 24] = params pointer
             (*process_context_ptr).rsp = rsp as u64;
 
             *(rsp as *mut u64) = process_request_ptr as u64;
@@ -178,6 +179,8 @@ impl Stack {
             *((rsp + 8) as *mut u64) = scheduler_context_ptr as u64;
 
             *((rsp + 16) as *mut u64) = process_context_ptr as u64;
+
+            *((rsp + 24) as *mut u64) = params;
             Ok(stack)
         }
     }

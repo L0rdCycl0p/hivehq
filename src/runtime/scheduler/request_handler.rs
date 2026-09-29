@@ -23,12 +23,10 @@ use libc::{calloc, free, malloc, realloc};
 use log::info;
 
 use crate::{
-    debug::gdb_marker,
-    error::HiveError,
-    runtime::scheduler::{
-        ProcessRegistryEntry, Scheduler,
-        api::{ProcessRequestParam, ProcessRequestTag},
-    },
+    debug::gdb_marker, error::HiveError, runtime::{load_exec::FunctionId, scheduler::{
+        ProcessRegistryEntry, ProcessState, Scheduler,
+        api::{MailBody, ProcessRequestParam, ProcessRequestTag},
+    }},
 };
 impl<S: Read + Seek> Scheduler<S> {
     /// # Safety
@@ -46,16 +44,52 @@ impl<S: Read + Seek> Scheduler<S> {
         match req {
             ProcessRequestTag::Syscall => todo!(),
             ProcessRequestTag::Recall => {}
-            ProcessRequestTag::CallWorker => todo!(),
+            ProcessRequestTag::CallWorker => {
+                let param = unsafe {param.call_worker};
+                let pid = unsafe { self.new_process(FunctionId(param.function), param.args)? };
+                unsafe { *(param.dst as *mut u32) = pid };
+            },
             ProcessRequestTag::Call => {
-                let _param = unsafe { param.call };
+                let param = unsafe { param.call };
+                self.call_function(process.pid, param.function, param.args as *const c_void)?;
             }
             ProcessRequestTag::MailClear => todo!(),
-            ProcessRequestTag::MailLen => todo!(),
-            ProcessRequestTag::MailPeek => todo!(),
-            ProcessRequestTag::MailTryRecv => todo!(),
-            ProcessRequestTag::MailRec => todo!(),
-            ProcessRequestTag::MailSend => todo!(),
+            ProcessRequestTag::MailLen => {
+                let param = unsafe { param.mail_len };
+                let dst = param as *mut u64;
+                unsafe { *dst = process.mailbox.len() as u64 };
+            }
+            ProcessRequestTag::MailPeek => {
+                let param = unsafe { param.mail_recv };
+                let dst = param as *mut MailBody;
+                todo!();
+            }
+            ProcessRequestTag::MailTryRecv => {
+                let param = unsafe { param.mail_recv };
+                let dst = param as *mut MailBody;
+                unsafe { *dst = process.mailbox.pop().unwrap_or(MailBody::default()) };
+            }
+            ProcessRequestTag::MailRecv => {
+                let param = unsafe { param.mail_recv };
+                let dst = param as *mut MailBody;
+                let msg = process.mailbox.pop();
+                if let Some(msg) = msg {
+                    unsafe { *dst = msg };
+                } else {
+                    process.state = ProcessState::WaitingRecv { dst: dst as u64 }
+                }
+            }
+            ProcessRequestTag::MailSend => {
+                let param = unsafe { param.mail_send };
+                let pids = self.manager.pids.read();
+                let pid_slot = pids.get(param.pid as usize).ok_or(HiveError::PidNotFound)?;
+                match pid_slot {
+                    crate::runtime::manager::PidSlot::Unused => return Err(HiveError::PidNotFound),
+                    crate::runtime::manager::PidSlot::Used(mutex) => {
+                        mutex.lock().mailbox.push(param.message);
+                    }
+                }
+            }
             ProcessRequestTag::SchedMigrate => todo!(),
             ProcessRequestTag::SchedCount => todo!(),
             ProcessRequestTag::SchedId => todo!(),

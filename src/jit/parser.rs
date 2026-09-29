@@ -430,21 +430,22 @@ impl<'a> Parser<'a> {
             }),
 
             0x71 => Ok(Opcode::HiveCall {
+                dst: self.read_operand()?,
+                function: self.read_operand()?,
+                args: self.read_operand()?,
+            }),
+            0x72 => Ok(Opcode::CallWorker { dst: self.read_operand()?, worker: self.read_operand()?, args: self.read_operand()? }),
+            0x73 => Ok(Opcode::NativeCall {
                 function: self.read_operand()?,
                 args: self.read_operand()?,
             }),
 
-            0x72 => Ok(Opcode::NativeCall {
-                function: self.read_operand()?,
-                args: self.read_operand()?,
-            }),
-
-            0x73 => Ok(Opcode::NativeReturn {
+            0x74 => Ok(Opcode::NativeReturn {
                 value: self.read_operand()?,
             }),
 
-            0x74 => Ok(Opcode::Recall),
-            0x75 => Ok(Opcode::Syscall),
+            0x75 => Ok(Opcode::Recall),
+            0x76 => Ok(Opcode::Syscall),
             0x77 => Ok(Opcode::Ret {
                 ptr: self.read_operand()?,
             }),

@@ -15,6 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use chrono::Utc;
+use crossbeam::queue::{ArrayQueue, SegQueue};
 use log::{info, warn};
 use parking_lot::Mutex;
 use static_assertions::assert_impl_all;
@@ -34,15 +35,9 @@ use api::ProcessRequest;
 use stack::{Stack, StackRegion};
 
 use crate::{
-    debug::gdb_marker,
-    error::HiveError,
-    jit::jit_function,
-    runtime::{
-        load_exec::{FunctionId, LoadedFunc},
-        manager::{Manager, PidSlot},
-        scheduler::{
-            api::ProcessRequestTag,
-            context::{HiveContext, swapcontext},
+    debug::gdb_marker, error::HiveError, jit::jit_function, runtime::{
+        load_exec::{FunctionId, LoadedFunc}, manager::{Manager, PidSlot}, scheduler::{
+            api::{MailBody, ProcessRequestTag}, context::{HiveContext, swapcontext},
         },
     },
 };
@@ -64,12 +59,13 @@ pub struct CallRetStack {
 pub struct ProcessRegistryEntry {
     pub pid: Pid,
 
-    // The process' CALL/RET stack.
+    /// The process' CALL/RET stack.
     pub stack_frames: Vec<CallRetStack>,
 
     pub process: Box<Process>,
     pub state: ProcessState,
-    pub mailbox: VecDeque<u64>,
+    /// SegQueue of ptr to data
+    pub mailbox: SegQueue<MailBody>, 
 }
 
 #[repr(C)]
@@ -108,7 +104,7 @@ impl<S: Read + Seek> Scheduler<S> {
                         ProcessState::Running => {}
 
                         ProcessState::WaitingRecv { dst } => {
-                            let Some(msg) = process.mailbox.pop_front() else {
+                            let Some(msg) = process.mailbox.pop() else {
                                 drop(process);
                                 self.manager
                                     .process_queue
@@ -117,7 +113,7 @@ impl<S: Read + Seek> Scheduler<S> {
                                 continue;
                             };
 
-                            *(dst as *mut *mut c_void) = msg as *mut c_void;
+                            *(dst as *mut MailBody) = msg;
 
                             process.state = ProcessState::Running;
                         }
@@ -163,7 +159,7 @@ impl<S: Read + Seek> Scheduler<S> {
         }
         Ok(())
     }
-    pub unsafe fn new_process(&mut self, function_id: FunctionId) -> Result<(), HiveError> {
+    pub unsafe fn new_process(&mut self, function_id: FunctionId, args: u64) -> Result<Pid, HiveError> {
         unsafe {
             let (code_offset, code_size, frame_size) = {
                 let loaded_file = self.manager.loaded_file.read();
@@ -219,12 +215,12 @@ impl<S: Read + Seek> Scheduler<S> {
                 },
             };
 
-            let mut process = ProcessRegistryEntry {
+            let process = ProcessRegistryEntry {
                 pid: 0,
                 stack_frames: Vec::with_capacity(5),
                 process: Box::new(process),
                 state: ProcessState::Running,
-                mailbox: VecDeque::new(),
+                mailbox: SegQueue::new(),
             };
             let process = Arc::new(Mutex::new(process));
             let pid = self.manager.allocate_pid(process.clone())?;
@@ -236,6 +232,7 @@ impl<S: Read + Seek> Scheduler<S> {
                 &raw mut process_guard.process.request,
                 &raw mut self.context,
                 &raw mut process_guard.process.context,
+                args
             )?;
             let frame = CallRetStack {
                 stack_region: frame,
@@ -245,17 +242,15 @@ impl<S: Read + Seek> Scheduler<S> {
             drop(process_guard);
             self.manager.process_queue.push(process);
 
-            Ok(())
+            Ok(pid)
         }
     }
     pub fn call_function(
         &mut self,
         pid: Pid,
         function_id: u32,
-        args: *const c_void,
-        frame_size: usize,
+        args: *const c_void
     ) -> Result<(), HiveError> {
-        let frame = self.stack.allocate(pid, frame_size)?;
         let (code_offset, code_size, frame_size) = {
             let loaded_file = self.manager.loaded_file.read();
 
@@ -267,6 +262,7 @@ impl<S: Read + Seek> Scheduler<S> {
                 function.frame_size,
             )
         };
+        let frame = self.stack.allocate(pid, frame_size as usize)?;
         let loaded_func = {
             let mut exec_page_manager = self.manager.exec_page_manager.write();
 

@@ -58,8 +58,8 @@ pub fn run_with_loaded_file<S: Read + Seek>(
         };
         let manager = Arc::new(manager);
         let mut scheduler = Scheduler::new(manager, STACK_SIZE)?;
-
-        unsafe { scheduler.new_process(FunctionId(init_func_id))? };
+        
+        unsafe { scheduler.new_process(FunctionId(init_func_id), 0)? };
 
         // ------------------------------------------------------------
         // Run

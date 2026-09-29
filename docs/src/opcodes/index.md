@@ -111,8 +111,8 @@
 | `F0 52` | `RESUME` | `process` | Resumes a suspended process.                                                                                                                                     |
 | `F0 53` | `SUSPEND` | `process` | Suspends a process.                                                                                                                                              |
 | `F0 70` | `JIT` | `function` | Requests JIT compilation of a function.                                                                                                                          |
-| `F0 71` | `CALL` | `function, args` | Executes a JIT-compiled function.                                                                                                                                |
-| `F0 72` | `CALL_WORKER` | `worker, args` | Executes a JIT-compiled function.                                                                                                                                |
+| `F0 71` | `CALL` | `dst, function, args` | Executes a JIT-compiled (dst = memory location where to put the pointer to the return value)function.                                                                                                                                |
+| `F0 72` | `CALL_WORKER` | `dst, worker, args` | Executes a JIT-compiled function.                                                                                                                                |
 | `F0 73` | `NATIVE_CALL` | `function, args` | Calls a native function.                                                                                                                                         |
 | `F0 74` | `NATIVE_RETURN` | `value` | Returns from a native boundary.                                                                                                                                  |
 | `F0 75` | `RECALL` | -                     | Recalls the current function, so no stack frame has to be allocated. This only works at worker functions, because they don't have a return value. Good for loops |

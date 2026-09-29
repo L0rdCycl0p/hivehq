@@ -495,11 +495,13 @@ pub enum Opcode {
     },
 
     HiveCall {
+        dst: Operand,
         function: Operand,
         args: Operand,
     },
 
     CallWorker {
+        dst: Operand,
         worker: Operand,
         args: Operand,
     },
