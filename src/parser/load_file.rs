@@ -22,15 +22,9 @@ use std::{
 use binrw::BinRead as _;
 
 use crate::{
-    error::HiveError,
-    parser::{
-        ParsedFile,
-        function_table::{FunctionDescriptor, FunctionTable},
-        header,
-        section_table::{self, SectionType},
-        strings::StringTable,
-    },
-    runtime::load_exec::FunctionId,
+    error::HiveError, parser::{
+        ParsedFile, function_table::{FunctionDescriptor, FunctionTable}, header::{self, Header}, section_table::{self, SectionType}, strings::StringTable,
+    }, runtime::load_exec::FunctionId,
 };
 
 #[inline]
@@ -47,7 +41,7 @@ pub fn load_file_by_data<S: Read + Seek>(source: S) -> Result<LoadedFile<S>, Hiv
 pub struct LoadedFile<S: Read + Seek> {
     pub source: Option<S>,
     pub header: header::Header,
-    pub sections: Vec<section_table::SectionDescriptor>,
+    pub sections: Box<[section_table::SectionDescriptor]>,
 
     pub strings: Box<[String]>,
     pub functions: Box<[FunctionDescriptor]>,
@@ -57,10 +51,10 @@ impl<S: Read + Seek> Default for LoadedFile<S> {
     fn default() -> Self {
         Self {
             source: None,
-            header: Default::default(),
-            sections: Default::default(),
-            strings: Default::default(),
-            functions: Default::default(),
+            header: Header::default(),
+            sections:   Box::default(),
+            strings: Box::default(),
+            functions: Box::default(),
         }
     }
 }
@@ -123,7 +117,7 @@ impl ParsedFile {
         let mut loaded_file = LoadedFile {
             source: Some(source),
             header: parsed.header,
-            sections: parsed.section_table,
+            sections: parsed.section_table.into(),
             functions: functions.into(),
             strings: strings.into(),
         };
