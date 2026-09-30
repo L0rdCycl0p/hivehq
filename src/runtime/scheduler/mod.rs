@@ -139,6 +139,7 @@ impl<S: Read + Seek> Scheduler<S> {
                         }
 
                         ProcessState::WaitingFD { .. } => {
+                            drop(process);
                             todo!();
                         }
 

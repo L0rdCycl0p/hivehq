@@ -1,6 +1,6 @@
 /*
  * @file            src/runtime/scheduler/request_handler.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-27 15:55:31
  * @lastModified    2026-09-29 20:31:19
@@ -69,6 +69,7 @@ impl<S: Read + Seek> Scheduler<S> {
                 | ProcessRequestTag::SchedYield
                 | ProcessRequestTag::ProcYield => {}
                 ProcessRequestTag::CallWorker => {
+                    drop(process);
                     let param = param.call_worker;
                     let pid = self.new_process(FunctionId(param.function), param.args)?;
                     *(param.dst as *mut u32) = pid;
@@ -76,16 +77,21 @@ impl<S: Read + Seek> Scheduler<S> {
                 ProcessRequestTag::Call => {
                     let param = param.call;
                     self.call_function(process.pid, param.function, param.args as *const c_void)?;
+                    drop(process);
                 }
                 ProcessRequestTag::MailClear => {
                     while process.mailbox.pop().is_some() {} // TODO!!! That can be better
+
+                    drop(process);
                 }
                 ProcessRequestTag::MailLen => {
                     let param = param.mail_len;
                     let dst = param as *mut u64;
                     *dst = process.mailbox.len() as u64;
+                    drop(process);
                 }
                 ProcessRequestTag::MailPeek => {
+                    drop(process);
                     let param = param.mail_recv;
                     let _dst = param as *mut MailBody;
                     todo!();
@@ -94,6 +100,7 @@ impl<S: Read + Seek> Scheduler<S> {
                     let param = param.mail_recv;
                     let dst = param as *mut MailBody;
                     *dst = process.mailbox.pop().unwrap_or_default();
+                    drop(process);
                 }
                 ProcessRequestTag::MailRecv => {
                     let param = param.mail_recv;
@@ -104,8 +111,10 @@ impl<S: Read + Seek> Scheduler<S> {
                     } else {
                         process.state = ProcessState::WaitingRecv { dst: dst as u64 }
                     }
+                    drop(process);
                 }
                 ProcessRequestTag::MailSend => {
+                    drop(process);
                     let param = param.mail_send;
                     let pids = self.manager.pids.read();
                     let pid_slot = pids.get(param.pid as usize).ok_or(HiveError::PidNotFound)?;
@@ -135,9 +144,11 @@ impl<S: Read + Seek> Scheduler<S> {
                     let duration = param.proc_sleep;
                     let end = start + duration as i64;
                     process.state = ProcessState::Sleep { end };
+                    drop(process);
                 }
                 ProcessRequestTag::ProcState => todo!(),
                 ProcessRequestTag::ProcKill => {
+                    drop(process);
                     let param = param.proc_kill;
                     let pids = self.manager.pids.write();
                     if let Some(crate::runtime::manager::PidSlot::Used(_p)) =
@@ -163,10 +174,12 @@ impl<S: Read + Seek> Scheduler<S> {
                     self.manager.free_pid(pid)?;
                 }
                 ProcessRequestTag::ProcSelf => {
+                    drop(process);
                     let param = param.proc_self;
                     free(param as *mut c_void);
                 }
                 ProcessRequestTag::ProcSpawn => {
+                    drop(process);
                     let param = param.proc_spawn;
                     let pid = self.new_process(FunctionId(param.function), param.args)?;
                     *(param.dst as *mut u32) = pid;
@@ -178,22 +191,26 @@ impl<S: Read + Seek> Scheduler<S> {
                 ProcessRequestTag::MemMove => todo!(),
                 ProcessRequestTag::MemCpy => todo!(),
                 ProcessRequestTag::Free => {
+                    drop(process);
                     let param = param.free;
                     free(param as *mut c_void);
                 }
                 ProcessRequestTag::ReAlloc => {
+                    drop(process);
                     let param = param.realloc;
                     let dst_ptr: *mut *mut c_void = param.dst as *mut *mut c_void;
                     let ptr = realloc(param.ptr as *mut c_void, param.size as usize);
                     *dst_ptr = ptr;
                 }
                 ProcessRequestTag::CAlloc => {
+                    drop(process);
                     let param = param.calloc;
                     let dst_ptr: *mut *mut c_void = param.dst as *mut *mut c_void;
                     let ptr = calloc(param.count as usize, param.size as usize);
                     *dst_ptr = ptr;
                 }
                 ProcessRequestTag::MAlloc => {
+                    drop(process);
                     let param = param.malloc;
                     let dst_ptr: *mut *mut c_void = param.dst as *mut *mut c_void;
                     let ptr = malloc(param.size as usize);
@@ -203,9 +220,10 @@ impl<S: Read + Seek> Scheduler<S> {
                 ProcessRequestTag::FrameAlloc => todo!(),
                 ProcessRequestTag::Frame => todo!(),
                 ProcessRequestTag::Ret => {
+                    drop(process);
                     let _param = param.ret;
                 }
-            }
+            };
             Ok(())
         }
     }
