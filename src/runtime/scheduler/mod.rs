@@ -1,6 +1,6 @@
 /*
  * @file            src/runtime/scheduler/mod.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-27 15:55:31
  * @lastModified    2026-09-29 20:39:58
@@ -43,9 +43,15 @@ use api::ProcessRequest;
 use stack::{Stack, StackRegion};
 
 use crate::{
-    debug::gdb_marker, error::HiveError, jit::jit_function, runtime::{
-        load_exec::{FunctionId, LoadedFunc}, manager::{Manager, PidSlot}, scheduler::{
-            api::{MailBody, ProcessRequestTag}, context::{HiveContext, swapcontext},
+    debug::gdb_marker,
+    error::HiveError,
+    jit::jit_function,
+    runtime::{
+        load_exec::{FunctionId, LoadedFunc},
+        manager::{Manager, PidSlot},
+        scheduler::{
+            api::{MailBody, ProcessRequestTag},
+            context::{HiveContext, swapcontext},
         },
     },
 };
@@ -73,7 +79,7 @@ pub struct ProcessRegistryEntry {
     pub process: Box<Process>,
     pub state: ProcessState,
     /// `SegQueue` of ptr to data
-    pub mailbox: SegQueue<MailBody>, 
+    pub mailbox: SegQueue<MailBody>,
 }
 
 #[repr(C)]
@@ -136,7 +142,6 @@ impl<S: Read + Seek> Scheduler<S> {
                             todo!();
                         }
 
-
                         ProcessState::Sleep { end } if Utc::now().timestamp_micros() >= end => {
                             process.state = ProcessState::Running;
                         }
@@ -166,14 +171,26 @@ impl<S: Read + Seek> Scheduler<S> {
                         .push(p)
                         .map_err(|_| HiveError::QueueIsFull)?;
                 } else {
-                    return Err(HiveError::Unknown(None))
+                    return Err(HiveError::Unknown(None));
                 }
             }
             warn!("All processes are done");
         }
         Ok(())
     }
-    pub unsafe fn new_process(&mut self, function_id: FunctionId, args: u64) -> Result<Pid, HiveError> {
+    /// # Safety
+    /// `args` must be either null if no arguments are required, or point to a
+    /// valid `Args` value that remains valid for the duration required by the
+    /// created process.
+    /// # Errors
+    /// - `HiveError::NoSourceAvailable`
+    /// - `HiveError::QueueIsFull`
+    ///   ...
+    pub unsafe fn new_process(
+        &mut self,
+        function_id: FunctionId,
+        args: u64,
+    ) -> Result<Pid, HiveError> {
         unsafe {
             let (code_offset, code_size, frame_size) = {
                 let loaded_file = self.manager.loaded_file.read();
@@ -209,7 +226,7 @@ impl<S: Read + Seek> Scheduler<S> {
                     drop(loaded_file);
                     let code = jit_function(buf.into_boxed_slice());
 
-                    exec_page_manager.load_func(function_id, code)?
+                    exec_page_manager.load_func(function_id, &code)?
                 }
             };
 
@@ -217,9 +234,10 @@ impl<S: Read + Seek> Scheduler<S> {
             // Initial CPU context
             // ------------------------------------------------------------
 
-            let mut context = HiveContext::default();
-
-            context.rip = loaded_func.ptr as u64;
+            let context = HiveContext {
+                rip: loaded_func.ptr as u64,
+                ..Default::default()
+            };
 
             let process = Process {
                 context,
@@ -246,7 +264,7 @@ impl<S: Read + Seek> Scheduler<S> {
                 &raw mut process_guard.process.request,
                 &raw mut self.context,
                 &raw mut process_guard.process.context,
-                args
+                args,
             )?;
             let frame = CallRetStack {
                 stack_region: frame,
@@ -254,7 +272,10 @@ impl<S: Read + Seek> Scheduler<S> {
             };
             process_guard.stack_frames.push(frame);
             drop(process_guard);
-            self.manager.process_queue.push(process);
+            self.manager
+                .process_queue
+                .push(process)
+                .map_err(|_| HiveError::QueueIsFull)?;
 
             Ok(pid)
         }
@@ -267,7 +288,7 @@ impl<S: Read + Seek> Scheduler<S> {
         &mut self,
         pid: Pid,
         function_id: u32,
-        args: *const c_void
+        args: *const c_void,
     ) -> Result<(), HiveError> {
         let (code_offset, code_size, frame_size) = {
             let loaded_file = self.manager.loaded_file.read();
@@ -302,7 +323,7 @@ impl<S: Read + Seek> Scheduler<S> {
                 drop(loaded_file);
                 let code = jit_function(buf.into_boxed_slice());
 
-                exec_page_manager.load_func(FunctionId(function_id), code)?
+                exec_page_manager.load_func(FunctionId(function_id), &code)?
             }
         };
         let frame = CallRetStack {

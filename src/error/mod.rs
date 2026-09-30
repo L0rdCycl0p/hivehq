@@ -76,5 +76,14 @@ pub enum HiveError {
     QueueIsFull,
 
     #[error("Unknown")]
-    Unknown(Option<&'static str>)
+    Unknown(Option<&'static str>),
+
+    #[error("Function not found")]
+    FunctionNotFound(u32),
+
+    #[error("Can not load empty function")]
+    CanNotLoadEmptyFunction(u32),
+
+    #[error("function length was checked to be non-zero")]
+    FunctionLenghtWasCheckedToBeNonZero(u32),
 }

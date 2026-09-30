@@ -34,6 +34,8 @@ use libc::{
 };
 use static_assertions::assert_impl_all;
 
+use crate::error::HiveError;
+
 const PAGE_SIZE: usize = 4096;
 /// The `FunctionId`
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -41,7 +43,6 @@ pub struct FunctionId(pub u32);
 /// A memory page containing JIT-compiled executable code.
 ///
 /// # Safety
-///
 /// `ExecPage` owns the memory returned by `mmap` and releases it in `Drop`.
 /// The mapped memory is not accessed through Rust references, and mutable
 /// access to the page is exclusively controlled by `ExecPageManager`.
@@ -121,7 +122,7 @@ pub struct LoadedFunc {
     pub ptr: *mut u8,
     pub len: usize,
 
-    pages: Box<[Arc<ExecPage>]>,
+    pub pages: Box<[Arc<ExecPage>]>,
 }
 // SAFETY: The executable memory is owned by `pages` and remains valid for
 // the lifetime of the `LoadedFunc`.
@@ -184,7 +185,9 @@ impl ExecPageManager {
         }
     }
     /// Gets a function if it is already loaded into memory via `mmap`
-    pub fn get_func(&mut self, id: FunctionId) -> io::Result<Arc<LoadedFunc>> {
+    /// # Errors
+    /// 
+    pub fn get_func(&mut self, id: FunctionId) -> Result<Arc<LoadedFunc>, HiveError> {
         let index = id.0 as usize;
 
         if self.functions.len() <= index {
@@ -197,7 +200,7 @@ impl ExecPageManager {
             return Ok(func);
         }
 
-        Err(io::Error::new(io::ErrorKind::NotFound, ""))
+        Err(HiveError::FunctionNotFound(id.0))
     }
     /// Checks whether a function exists
     #[must_use]
@@ -211,14 +214,13 @@ impl ExecPageManager {
         weak_func.strong_count() > 0
     }
     /// Loads a function into memory via `mmap`
-    pub fn load_func(&mut self, id: FunctionId, code: Box<[u8]>) -> io::Result<Arc<LoadedFunc>> {
+    /// # Errors
+    /// - `HiveError::CanNotLoadEmptyFunction`
+    pub fn load_func(&mut self, id: FunctionId, code: &[u8]) -> Result<Arc<LoadedFunc>, HiveError> {
         let len = code.len();
 
         if len == 0 {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "cannot load empty function",
-            ));
+            return Err(HiveError::CanNotLoadEmptyFunction(id.0));
         }
 
         self.pages.retain(|managed| managed.page.strong_count() > 0);
@@ -297,7 +299,7 @@ impl ExecPageManager {
             code_offset += amount;
         }
 
-        let ptr = function_ptr.expect("function length was checked to be non-zero");
+        let ptr = function_ptr.ok_or(HiveError::FunctionLenghtWasCheckedToBeNonZero(id.0))?;
         let loaded_func = LoadedFunc {
             id,
             ptr,
@@ -306,7 +308,7 @@ impl ExecPageManager {
         };
         let loaded_func = Arc::new(loaded_func);
         if self.functions.len() <= id.0 as usize {
-            let mut c = id.0 as usize - self.functions.len(); // [0, 1, 2, 3, 4, 5, 6, 7, 8] 9
+            let mut c = id.0 as usize - self.functions.len();
             while c != 0 {
                 self.functions.push(None);
                 c -= 1;
