@@ -17,7 +17,6 @@ repository = "https://github.com/L0rdCycl0p/hivehq"
 readme = "README.md"
 
 keywords = ["runtime", "linux", "memory", "server"]
-authors = ["L0rdCycl0p"]
 build = "build.rs"
 categories = ["concurrency", "virtualization"]
 

@@ -25,10 +25,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use std::{env, path::PathBuf, process::Command};
 
+#[allow(clippy::expect_used)]
+#[allow(clippy::unwrap_used)]
 fn main() {
     let out = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     let obj = out.join("jit.x86_64.context_switch.o");
-
     let status = Command::new("nasm")
         .args(["-f", "elf64", "src/jit/x86_64/context_switch.asm", "-o"])
         .arg(&obj)
