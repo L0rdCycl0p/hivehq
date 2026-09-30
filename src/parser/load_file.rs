@@ -1,18 +1,27 @@
-// HIVE (Hive Is Very Efficient)
-// Copyright (C) 2026 L0rdCycl0p
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
+/*
+ * @file            src/parser/load_file.rs
+ * @description     
+ * @author          TrollMii <trollmii@proton.me>
+ * @createTime      2026-09-20 15:48:29
+ * @lastModified    2026-09-30 16:04:05
+ * Copyright ©L0rdCycl0p
+                    HIVE (Hive Is Very Efficient)
+Copyright (C) 2026 L0rdCycl0p
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+*/
 
 use std::{
     io::{Read, Seek, SeekFrom},
@@ -33,11 +42,22 @@ use crate::{
     runtime::load_exec::FunctionId,
 };
 
+/// # Errors
+/// ## `std::io::Error`
+/// ## `binrw::Error` Errors
+/// ## `HiveError`
+///  - `HiveError::FunctionIsInMultipleCodeChunk`
+///  - `HiveError::FunctionDoesNotFitInAnyCodeChunk`
 #[inline]
 pub fn load_file(file_path: PathBuf) -> Result<LoadedFile<std::fs::File>, HiveError> {
     let f = std::fs::File::open(file_path)?;
     load_file_by_data(f)
 }
+/// # Errors
+/// ## `binrw::Error` Errors
+/// ## `HiveError`
+///  - `HiveError::FunctionIsInMultipleCodeChunk`
+///  - `HiveError::FunctionDoesNotFitInAnyCodeChunk`
 #[inline]
 pub fn load_file_by_data<S: Read + Seek>(source: S) -> Result<LoadedFile<S>, HiveError> {
     ParsedFile::parse(source)
@@ -76,6 +96,11 @@ const CODE_SECTION_MAPPING_DEFAULT: CodeSectionMapping = CodeSectionMapping {
     end: 0,
 };
 impl ParsedFile {
+    /// # Errors
+    /// ## `binrw::Error` Errors
+    /// ## `HiveError`
+    ///  - `HiveError::FunctionIsInMultipleCodeChunk`
+    ///  - `HiveError::FunctionDoesNotFitInAnyCodeChunk`
     pub fn parse<S>(mut source: S) -> Result<LoadedFile<S>, HiveError>
     where
         S: Read + Seek,
