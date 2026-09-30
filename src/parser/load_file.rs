@@ -22,9 +22,15 @@ use std::{
 use binrw::BinRead as _;
 
 use crate::{
-    error::HiveError, parser::{
-        ParsedFile, function_table::{FunctionDescriptor, FunctionTable}, header::{self, Header}, section_table::{self, SectionType}, strings::StringTable,
-    }, runtime::load_exec::FunctionId,
+    error::HiveError,
+    parser::{
+        ParsedFile,
+        function_table::{FunctionDescriptor, FunctionTable},
+        header::{self, Header},
+        section_table::{self, SectionType},
+        strings::StringTable,
+    },
+    runtime::load_exec::FunctionId,
 };
 
 #[inline]
@@ -52,13 +58,13 @@ impl<S: Read + Seek> Default for LoadedFile<S> {
         Self {
             source: None,
             header: Header::default(),
-            sections:   Box::default(),
+            sections: Box::default(),
             strings: Box::default(),
             functions: Box::default(),
         }
     }
 }
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct CodeSectionMapping {
     pub offset: u64,
     pub start: u64,
@@ -78,7 +84,8 @@ impl ParsedFile {
 
         let mut strings = Vec::new();
         let mut functions = Vec::new();
-        let mut code_section_mapping = Vec::new();
+        let mut code_section_mapping = vec![CODE_SECTION_MAPPING_DEFAULT];
+        let mut code_section_mapping_is_first_element = true;
         for section in &parsed.section_table {
             match section.type_ {
                 SectionType::Strings => {
@@ -102,9 +109,14 @@ impl ParsedFile {
                 }
 
                 SectionType::Code => {
-                    let last = code_section_mapping
-                        .last()
-                        .unwrap_or(&CODE_SECTION_MAPPING_DEFAULT);
+                    let last = if code_section_mapping_is_first_element {
+                        code_section_mapping_is_first_element = false;
+                        // SAFETY: `code_section_mapping is already initialized with `CODE_SECTION_MAPPING_DEFAULT`
+                        unsafe { code_section_mapping.pop().unwrap_unchecked() }
+                    } else {
+                        // SAFETY: `code_section_mapping is already initialized with `CODE_SECTION_MAPPING_DEFAULT`
+                        unsafe { *code_section_mapping.last().unwrap_unchecked() }
+                    };
                     code_section_mapping.push(CodeSectionMapping {
                         offset: section.offset,
                         start: last.end,
