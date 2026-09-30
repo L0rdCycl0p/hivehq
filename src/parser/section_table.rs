@@ -59,15 +59,3 @@ pub struct SectionDescriptor {
     pub alignment: u32,
     pub reserved: u32,
 }
-pub type SectionTable = Box<[SectionDescriptor]>;
-#[allow(clippy::indexing_slicing)]
-pub fn decode_section_table<S>(
-    _source: &mut S,
-    _section_table_offset: u64,
-    _section_count: u32,
-) -> Result<SectionTable, LoadError>
-where
-    S: Read + Seek,
-{
-    todo!()
-}
