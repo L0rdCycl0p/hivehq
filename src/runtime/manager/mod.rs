@@ -70,7 +70,6 @@ impl<S: Read + Seek> Manager<S> {
     /// - `HiveError::NoPidsAvailable` if no pids are available
     pub fn allocate_pid(&self, process: ProcessRef) -> Result<u32, HiveError> {
         let mut pids = self.pids.write();
-
         for (pid, slot) in pids.iter_mut().enumerate() {
             if matches!(slot, PidSlot::Unused) {
                 *slot = PidSlot::Used(process);
@@ -83,9 +82,12 @@ impl<S: Read + Seek> Manager<S> {
             return Err(HiveError::NoPidsAvailable);
         }
         pids.push(PidSlot::Used(process));
+        drop(pids);
         Ok(pid as u32)
     }
-
+    /// # Errors
+    /// - `HiveError::PidAlreadyFree` if the pid is already free
+    /// - `HiveError::PidNotFound` if the pid is not found
     pub fn free_pid(&self, pid: u32) -> Result<(), HiveError> {
         let pids = self.pids.read();
 
