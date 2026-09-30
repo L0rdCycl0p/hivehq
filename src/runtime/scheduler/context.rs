@@ -3,7 +3,7 @@
  * @description     
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-27 15:55:31
- * @lastModified    2026-09-27 13:30:11
+ * @lastModified    2026-09-30 17:45:12
  * Copyright ©L0rdCycl0p
                     HIVE (Hive Is Very Efficient)
 Copyright (C) 2026 L0rdCycl0p
@@ -47,7 +47,8 @@ pub struct HiveContext {
     pub rip: u64,    // 128
     pub rflags: u64, // 136
 }
-
+/// # Safety
+/// Make sure that the RIP/RSP/RBP of the new `HiveContext` is valid and **rust can not make sure that the function of the new context is memory safe**
 pub unsafe fn swapcontext(old: &mut HiveContext, new: &HiveContext) {
     unsafe {
         asm!(

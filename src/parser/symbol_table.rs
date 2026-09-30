@@ -3,7 +3,7 @@
  * @description     
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
- * @lastModified    2026-09-30 16:04:41
+ * @lastModified    2026-09-30 17:46:09
  * Copyright ©L0rdCycl0p
                     HIVE (Hive Is Very Efficient)
 Copyright (C) 2026 L0rdCycl0p
@@ -85,7 +85,8 @@ pub struct SymbolDescriptor {
     pub bindings: SymbolBindings,
 }
 pub type SymbolTable = Box<[SymbolDescriptor]>;
-
+/// # Errors
+/// `LoadError::BadAlignment`
 pub fn decode_symbol_table<S>(
     source: &mut S,
     section_entry: &SectionDescriptor,

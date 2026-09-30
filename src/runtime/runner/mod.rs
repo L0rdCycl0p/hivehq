@@ -3,7 +3,7 @@
  * @description     
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
- * @lastModified    2026-09-30 16:05:17
+ * @lastModified    2026-09-30 17:43:21
  * Copyright ©L0rdCycl0p
                     HIVE (Hive Is Very Efficient)
 Copyright (C) 2026 L0rdCycl0p
@@ -40,12 +40,17 @@ use crate::{
 use std::io::{Read, Seek, SeekFrom};
 use std::sync::Arc;
 const STACK_SIZE: usize = 64 * 1024;
-
+/// # Errors
+/// ## `binrw::Error` Errors
+/// ## `HiveError`
+///  - `HiveError::FunctionIsInMultipleCodeChunk`
+///  - `HiveError::FunctionDoesNotFitInAnyCodeChunk`
 pub fn run_hive_data_stream<S: Read + Seek>(source: S) -> Result<(), HiveError> {
     let loaded_file = load_file_by_data(source)?;
     run_with_loaded_file(loaded_file)
 }
-
+/// # Errors
+/// TODO
 pub fn run_with_loaded_file<S: Read + Seek>(
     mut loaded_file: LoadedFile<S>,
 ) -> Result<(), HiveError> {
