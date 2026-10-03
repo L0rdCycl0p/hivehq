@@ -23,7 +23,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-use std::alloc::{Layout, alloc, dealloc};
+use std::{alloc::{Layout, alloc, dealloc}, os::raw::c_void};
 
 use crate::{
     error::HiveError,
@@ -171,7 +171,7 @@ impl Stack {
         process_request_ptr: *mut ProcessRequest,
         scheduler_context_ptr: *mut HiveContext,
         process_context_ptr: *mut HiveContext,
-        params: u64
+        params: *const c_void
     ) -> Result<StackRegion, HiveError> {
         unsafe {
             let stack = self.allocate(pid, size)?;
@@ -190,7 +190,7 @@ impl Stack {
 
             *((rsp + 16) as *mut u64) = process_context_ptr as u64;
 
-            *((rsp + 24) as *mut u64) = params;
+            *((rsp + 24) as *mut u64) = params as u64;
             Ok(stack)
         }
     }

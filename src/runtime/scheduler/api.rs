@@ -23,6 +23,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+use std::os::raw::c_void;
+
 #[repr(C, packed)]
 pub struct ProcessRequest {
     pub request: ProcessRequestTag,
@@ -86,7 +88,7 @@ pub struct FrameParam {
 #[derive(Copy, Clone)]
 pub struct AllocParam {
     // ptr to the return value (ptr to the heap mem)
-    pub dst: u64,
+    pub dst: *mut *mut c_void,
     pub size: u64,
 }
 
@@ -94,7 +96,7 @@ pub struct AllocParam {
 #[derive(Copy, Clone)]
 pub struct CallocParam {
     // ptr to the return value (ptr to the heap mem)
-    pub dst: u64,
+    pub dst: *mut *mut c_void,
     pub count: u64,
     pub size: u64,
 }
@@ -111,29 +113,27 @@ pub struct ReallocParam {
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct MemRegionParam {
-    // ptr to the return value
-    pub dst: u64,
-    pub src: u64,
+    pub dst: *const c_void,
+    pub src: *const c_void,
     pub size: u64,
 }
 
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct MemsetParam {
-    // ptr to the return value
-    pub dst: u64,
-    pub value: u8,
+    pub dst: *const c_void,
     pub size: u64,
+    pub value: i32,
 }
 
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct ProcSpawnParam {
     /// ptr to the return value (pid)
-    pub dst: u64,
+    pub dst: *mut u32,
     pub function: u32,
     /// ptr to the arguments
-    pub args: u64,
+    pub args: *const c_void,
 }
 
 #[repr(C, packed)]
@@ -169,7 +169,7 @@ pub struct MailSendParam {
 #[derive(Copy, Clone, Default)]
 pub struct MailBody {
     pub len: u64,
-    pub ptr: u64,
+    pub ptr: *const c_void,
 }
 
 #[repr(C, packed)]
@@ -178,14 +178,14 @@ pub struct AsyncParam {
     // ptr to the return value
     pub dst: u32,
     pub function: u32,
-    pub args: u64, // ptr
+    pub args: *const c_void, // ptr
 }
 
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct CallParam {
-    pub args: u64, // ptr
-    pub dst: u64, // ptr
+    pub args: *const c_void, // ptr
+    pub dst: *mut *mut c_void, // ptr
     pub function: u32,
 }
 

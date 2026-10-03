@@ -29,7 +29,7 @@ use std::{
 };
 
 use chrono::Local;
-use libc::{calloc, free, malloc, realloc};
+use libc::{calloc, free, malloc, memcmp, memcpy, memmove, memset, realloc};
 use log::info;
 use parking_lot::MutexGuard;
 
@@ -76,7 +76,7 @@ impl<S: Read + Seek> Scheduler<S> {
                 }
                 ProcessRequestTag::Call => {
                     let param = param.call;
-                    self.call_function(process.pid, param.function, param.args as *const c_void)?;
+                    self.call_function(process.pid, param.function, param.args, param.dst)?;
                     drop(process);
                 }
                 ProcessRequestTag::MailClear => {
@@ -159,9 +159,9 @@ impl<S: Read + Seek> Scheduler<S> {
                     let exit_code = param.proc_exit;
 
                     let i = param.mem_region;
-                    let a = i.dst.to_le_bytes();
-                    let b = i.src.to_le_bytes();
-                    let c = i.dst.to_le_bytes();
+                    let a = (i.dst as u64).to_le_bytes();
+                    let b = (i.src as u64).to_le_bytes();
+                    let c = (i.dst as u64).to_le_bytes();
                     let mut result = [0u8; 24];
 
                     result[0..8].copy_from_slice(&a);
@@ -186,10 +186,26 @@ impl<S: Read + Seek> Scheduler<S> {
                 }
                 ProcessRequestTag::StackFree => todo!(),
                 ProcessRequestTag::StackAlloc => todo!(),
-                ProcessRequestTag::MemCmp => todo!(),
-                ProcessRequestTag::MemSet => todo!(),
-                ProcessRequestTag::MemMove => todo!(),
-                ProcessRequestTag::MemCpy => todo!(),
+                ProcessRequestTag::MemCmp => {
+                    drop(process);
+                    let param = param.mem_region;
+                    memcmp(param.dst as *mut c_void, param.src as *mut c_void, param.size as usize);
+                },
+                ProcessRequestTag::MemSet => {
+                    drop(process);
+                    let param = param.memset;
+                    memset(param.dst as *mut c_void, param.value, param.size as usize);
+                },
+                ProcessRequestTag::MemMove => {
+                    drop(process);
+                    let param = param.mem_region;
+                    memmove(param.dst as *mut c_void, param.src as *mut c_void, param.size as usize);
+                },
+                ProcessRequestTag::MemCpy => {
+                    drop(process);
+                    let param = param.mem_region;
+                    memcpy(param.dst as *mut c_void, param.src as *mut c_void, param.size as usize);
+                },
                 ProcessRequestTag::Free => {
                     drop(process);
                     let param = param.free;
@@ -220,8 +236,10 @@ impl<S: Read + Seek> Scheduler<S> {
                 ProcessRequestTag::FrameAlloc => todo!(),
                 ProcessRequestTag::Frame => todo!(),
                 ProcessRequestTag::Ret => {
+                    let param = param.ret;
+                    let pid = process.pid;
                     drop(process);
-                    let _param = param.ret;
+                    self.return_function(pid, param as *mut c_void)?;
                 }
             };
             Ok(())

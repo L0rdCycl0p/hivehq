@@ -68,6 +68,7 @@ pub struct Scheduler<S: Read + Seek> {
 pub struct CallRetStack {
     pub stack_region: StackRegion,
     pub function: Arc<LoadedFunc>,
+    pub return_dst: *mut *mut c_void,
 }
 
 pub struct ProcessRegistryEntry {
@@ -190,7 +191,7 @@ impl<S: Read + Seek> Scheduler<S> {
     pub unsafe fn new_process(
         &mut self,
         function_id: FunctionId,
-        args: u64,
+        args: *const c_void,
     ) -> Result<Pid, HiveError> {
         unsafe {
             let (code_offset, code_size, frame_size) = {
@@ -270,6 +271,7 @@ impl<S: Read + Seek> Scheduler<S> {
             let frame = CallRetStack {
                 stack_region: frame,
                 function: loaded_func,
+                return_dst: std::ptr::null_mut::<*mut c_void>(), // TODO
             };
             process_guard.stack_frames.push(frame);
             drop(process_guard);
@@ -290,6 +292,7 @@ impl<S: Read + Seek> Scheduler<S> {
         pid: Pid,
         function_id: u32,
         args: *const c_void,
+        return_dst: *mut *mut c_void,
     ) -> Result<(), HiveError> {
         let (code_offset, code_size, frame_size) = {
             let loaded_file = self.manager.loaded_file.read();
@@ -330,6 +333,7 @@ impl<S: Read + Seek> Scheduler<S> {
         let frame = CallRetStack {
             stack_region: frame,
             function: loaded_func,
+            return_dst,
         };
         match &self.manager.pids.read()[pid as usize] {
             PidSlot::Unused => todo!(),
@@ -344,16 +348,20 @@ impl<S: Read + Seek> Scheduler<S> {
     /// # Errors
     /// - `HiveError::RetOnEmptyStack`
     /// - `HiveError::AttemptedToFreeUnknownStackFrame`
-    pub fn return_function(&mut self, pid: Pid) -> Result<(), HiveError> {
+    pub unsafe fn return_function(
+        &mut self,
+        pid: Pid,
+        ret_value: *mut c_void,
+    ) -> Result<(), HiveError> {
         match &self.manager.pids.read()[pid as usize] {
             PidSlot::Unused => todo!(),
             PidSlot::Used(mutex) => {
-                let frame = mutex
-                    .lock()
+                let mut process = mutex.lock();
+                let frame = process
                     .stack_frames
                     .pop()
                     .ok_or(HiveError::RetOnEmptyStack)?;
-
+                unsafe { *frame.return_dst = ret_value };
                 self.stack.free(frame.stack_region.start)?;
                 Ok(())
             }

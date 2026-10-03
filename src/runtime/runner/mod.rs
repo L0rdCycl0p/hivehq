@@ -38,6 +38,7 @@ use crate::{
     },
 };
 use std::io::{Read, Seek, SeekFrom};
+use std::os::raw::c_void;
 use std::sync::Arc;
 const STACK_SIZE: usize = 64 * 1024;
 /// # Errors
@@ -73,7 +74,7 @@ pub fn run_with_loaded_file<S: Read + Seek>(
         let manager = Arc::new(manager);
         let mut scheduler = Scheduler::new(manager, STACK_SIZE)?;
         
-        unsafe { scheduler.new_process(FunctionId(init_func_id), 0)? };
+        unsafe { scheduler.new_process(FunctionId(init_func_id), std::ptr::null::<c_void>())? }; // TODO
 
         // ------------------------------------------------------------
         // Run

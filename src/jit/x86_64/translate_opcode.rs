@@ -1032,7 +1032,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
             TranslatedOpcode(a, b)
         }
         Opcode::Memset { dst, value, size } => {
-            let (a, b) = gen_sched_req(0x16, &[(dst, 1, 8), (value, 9, 1), (size, 10, 8)], offset);
+            let (a, b) = gen_sched_req(0x16, &[(dst, 1, 8),  (size, 9, 8), (value, 17, 4)], offset);
             TranslatedOpcode(a, b)
         }
         Opcode::Memcmp { a, b, size } => {
