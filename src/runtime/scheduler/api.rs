@@ -25,10 +25,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use std::os::raw::c_void;
 
-#[repr(C, packed)]
+#[repr(C)]
 pub struct ProcessRequest {
     pub request: ProcessRequestTag,
-    pub params: [u8; 24], //
+    pub params: ProcessRequestParam,   // union, aligned by its most-aligned variant
 }
 
 #[repr(u8)]
@@ -194,6 +194,7 @@ pub struct CallParam {
 }
 
 #[repr(C, packed)]
+#[derive(Clone, Copy)]
 pub union ProcessRequestParam {
     /// FRAME
     pub frame: FrameParam,
@@ -298,5 +299,6 @@ pub union ProcessRequestParam {
     /// ptr to return value
     pub ret: u64,
 }
-
+unsafe impl Send for ProcessRequestParam {}
+unsafe impl Sync for ProcessRequestParam {}
 pub const PROCESS_REQUEST_PARAM_SIZE: usize = size_of::<ProcessRequestParam>();
