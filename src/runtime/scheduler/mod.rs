@@ -1,9 +1,9 @@
 /*
  * @file            src/runtime/scheduler/mod.rs
- * @description
+ * @description     
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-27 15:55:31
- * @lastModified    2026-09-29 20:39:58
+ * @lastModified    2026-10-14 16:07:07
  * Copyright ©L0rdCycl0p
                     HIVE (Hive Is Very Efficient)
 Copyright (C) 2026 L0rdCycl0p
@@ -70,6 +70,9 @@ pub struct CallRetStack {
     pub function: Arc<LoadedFunc>,
     pub return_dst: *mut *mut c_void,
 }
+// SAFETY: Only the process can return,
+unsafe impl Send for CallRetStack {}
+unsafe impl Sync for CallRetStack {}
 
 pub struct ProcessRegistryEntry {
     pub pid: Pid,
@@ -82,7 +85,7 @@ pub struct ProcessRegistryEntry {
     /// `SegQueue` of ptr to data
     pub mailbox: SegQueue<MailBody>,
 }
-
+static_assertions::assert_impl_all!(ProcessRegistryEntry: Send, Sync);
 #[repr(C)]
 pub struct Process {
     pub context: HiveContext,

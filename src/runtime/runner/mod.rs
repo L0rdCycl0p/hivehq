@@ -3,7 +3,7 @@
  * @description     
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
- * @lastModified    2026-09-30 17:43:21
+ * @lastModified    2026-10-14 16:06:34
  * Copyright ©L0rdCycl0p
                     HIVE (Hive Is Very Efficient)
 Copyright (C) 2026 L0rdCycl0p
@@ -46,13 +46,15 @@ const STACK_SIZE: usize = 64 * 1024;
 /// ## `HiveError`
 ///  - `HiveError::FunctionIsInMultipleCodeChunk`
 ///  - `HiveError::FunctionDoesNotFitInAnyCodeChunk`
-pub fn run_hive_data_stream<S: Read + Seek>(source: S) -> Result<(), HiveError> {
+pub fn run_hive_data_stream<S: 'static + Read + Seek + Send + Sync>(
+    source: S,
+) -> Result<(), HiveError> {
     let loaded_file = load_file_by_data(source)?;
     run_with_loaded_file(loaded_file)
 }
 /// # Errors
 /// TODO
-pub fn run_with_loaded_file<S: Read + Seek>(
+pub fn run_with_loaded_file<S: 'static + Read + Seek + Send + Sync>(
     mut loaded_file: LoadedFile<S>,
 ) -> Result<(), HiveError> {
     if let Some(source) = &mut loaded_file.source {
@@ -73,16 +75,12 @@ pub fn run_with_loaded_file<S: Read + Seek>(
         };
         let manager = Arc::new(manager);
         let mut scheduler = Scheduler::new(manager, STACK_SIZE)?;
-        
         unsafe { scheduler.new_process(FunctionId(init_func_id), std::ptr::null::<c_void>())? }; // TODO
 
         // ------------------------------------------------------------
         // Run
         // ------------------------------------------------------------
-
-        unsafe {
-            scheduler.scheduler_run()?;
-        }
+        unsafe {scheduler.scheduler_run()?;}
         gdb_marker!(runner_run_with_init_func_end);
         Ok(())
     } else {

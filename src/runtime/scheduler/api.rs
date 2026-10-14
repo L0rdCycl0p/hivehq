@@ -3,7 +3,7 @@
  * @description     
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-27 15:55:31
- * @lastModified    2026-09-30 16:05:45
+ * @lastModified    2026-10-14 15:44:54
  * Copyright ©L0rdCycl0p
                     HIVE (Hive Is Very Efficient)
 Copyright (C) 2026 L0rdCycl0p
@@ -171,6 +171,10 @@ pub struct MailBody {
     pub len: u64,
     pub ptr: *const c_void,
 }
+
+// SAFETY: Mailbody is only used by the current process via a Mutex
+unsafe impl Send for MailBody {}
+unsafe impl Sync for MailBody {}
 
 #[repr(C, packed)]
 #[derive(Copy, Clone)]

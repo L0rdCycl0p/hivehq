@@ -3,7 +3,7 @@
  * @description     
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
- * @lastModified    2026-09-30 16:05:07
+ * @lastModified    2026-10-14 16:06:46
  * Copyright ©L0rdCycl0p
                     HIVE (Hive Is Very Efficient)
 Copyright (C) 2026 L0rdCycl0p
@@ -46,7 +46,7 @@ pub struct Manager<S: Read + Seek> {
     pub loaded_file: RwLock<LoadedFile<S>>,
     pub process_queue: ArrayQueue<ProcessRef>,
 }
-
+static_assertions::assert_impl_all!(Manager<std::fs::File>: Send, Sync);
 pub enum PidSlot {
     Unused,
     Used(ProcessRef),

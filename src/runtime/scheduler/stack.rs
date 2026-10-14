@@ -3,7 +3,7 @@
  * @description     
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-27 15:55:31
- * @lastModified    2026-09-29 20:39:53
+ * @lastModified    2026-10-14 15:58:23
  * Copyright ©L0rdCycl0p
                     HIVE (Hive Is Very Efficient)
 Copyright (C) 2026 L0rdCycl0p
@@ -38,7 +38,9 @@ pub struct Stack {
     pub size: usize,
     pub frames: Vec<StackRegion>,
 }
-
+// SAFETY: Stack is in a mutex
+unsafe impl Send for Stack {}
+unsafe impl Sync for Stack {}
 pub struct StackRegion {
     pub start: *mut u8,
     pub end: *mut u8,
