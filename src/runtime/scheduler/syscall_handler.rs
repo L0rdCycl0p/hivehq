@@ -1,6 +1,6 @@
 /*
  * @file            src/runtime/scheduler/syscall_handler.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-29 20:05:32
  * @lastModified    2026-09-29 20:18:32
@@ -24,43 +24,48 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 use std::{
-    arch::asm, io::{Read, Seek},
+    arch::asm,
+    io::{Read, Seek},
 };
 
 use parking_lot::MutexGuard;
 
 use crate::{
     error::HiveError,
-    runtime::scheduler::{
-            ProcessRegistryEntry, Scheduler,
-        },
+    runtime::scheduler::{ProcessRegistryEntry, Scheduler},
 };
 impl<S: Read + Seek> Scheduler<S> {
     /// # Safety
     /// Syscall has to be valid.
     pub unsafe fn handle_syscall(
         &mut self,
-        process: MutexGuard<'_, ProcessRegistryEntry>,
-    ) -> Result<(), HiveError> { unsafe {
-        // TODO!!!
-        asm!(
-            "mov rax, {rax}",
-            "mov rdi, {rdi}",
-            "mov rsi, {rsi}",
-            "mov rdx, {rdx}",
-            "mov r10, {r10}",
-            "mov r8, {r8}",
-            "mov r9, {r9}",
-            "syscall",
-            rax = in(reg) process.process.context.rax,
-            rdi = in(reg) process.process.context.rdi,
-            rsi = in(reg) process.process.context.rsi,
-            rdx = in(reg) process.process.context.rdx,
-            r10 = in(reg) process.process.context.r10,
-            r8  = in(reg) process.process.context.r8,
-            r9  = in(reg) process.process.context.r9,
-            
-        );
-        Ok(())
-    }}
+        mut process: MutexGuard<'_, ProcessRegistryEntry>,
+    ) -> Result<(), HiveError> {
+        unsafe {
+            // TODO!!!
+            let rax_out: u64;
+            asm!(
+                    "mov rax, {rax}",
+                    "mov rdi, {rdi}",
+                    "mov rsi, {rsi}",
+                    "mov rdx, {rdx}",
+                    "mov r10, {r10}",
+                    "mov r8, {r8}",
+                    "mov r9, {r9}",
+                    "syscall",
+                    out("rax") rax_out,
+                    out("rcx") _, out("r11") _,
+                    rax = in(reg) process.process.context.rax,
+                    rdi = in(reg) process.process.context.rdi,
+                    rsi = in(reg) process.process.context.rsi,
+                    rdx = in(reg) process.process.context.rdx,
+                    r10 = in(reg) process.process.context.r10,
+                    r8  = in(reg) process.process.context.r8,
+                    r9  = in(reg) process.process.context.r9,
+
+                );
+            process.process.context.rax = rax_out;
+            Ok(())
+        }
+    }
 }
