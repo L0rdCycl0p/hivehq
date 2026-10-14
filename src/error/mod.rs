@@ -89,4 +89,7 @@ pub enum HiveError {
 
     #[error("function length was checked to be non-zero")]
     FunctionLenghtWasCheckedToBeNonZero(u32),
+
+    #[error("Null pointer")]
+    NullPointer
 }

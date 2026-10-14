@@ -1,6 +1,6 @@
 /*
  * @file            src/runtime/scheduler/mod.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-27 15:55:31
  * @lastModified    2026-10-14 16:07:07
@@ -364,7 +364,9 @@ impl<S: Read + Seek> Scheduler<S> {
                     .stack_frames
                     .pop()
                     .ok_or(HiveError::RetOnEmptyStack)?;
-                unsafe { *frame.return_dst = ret_value };
+                if !frame.return_dst.is_null() {
+                    unsafe { *frame.return_dst = ret_value };
+                }
                 self.stack.free(frame.stack_region.start)?;
                 Ok(())
             }
