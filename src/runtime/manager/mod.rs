@@ -1,6 +1,6 @@
 /*
  * @file            src/runtime/manager/mod.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
  * @lastModified    2026-10-14 16:06:46
@@ -32,9 +32,7 @@ use crossbeam::queue::ArrayQueue;
 use parking_lot::{Mutex, RwLock};
 type ProcessRef = Arc<Mutex<ProcessRegistryEntry>>;
 use crate::{
-    error::HiveError,
-    parser::LoadedFile,
-    runtime::{load_exec::ExecPageManager, scheduler::ProcessRegistryEntry},
+    error::HiveError, parser::LoadedFile, runtime::{load_exec::ExecPageManager, scheduler::{ProcessRegistryEntry, ProcessState}},
 };
 /// The schedulers shares this struct
 pub struct Manager<S: Read + Seek> {
@@ -89,22 +87,15 @@ impl<S: Read + Seek> Manager<S> {
     /// - `HiveError::PidAlreadyFree` if the pid is already free
     /// - `HiveError::PidNotFound` if the pid is not found
     pub fn free_pid(&self, pid: u32) -> Result<(), HiveError> {
-        let pids = self.pids.read();
-
-        let proc = pids.get(pid as usize).ok_or(HiveError::PidNotFound)?;
-        match proc {
-            PidSlot::Unused => return Err(HiveError::PidAlreadyFree),
-            PidSlot::Used(mutex) => {
-                let mut proc = mutex.lock();
-                proc.state = super::scheduler::ProcessState::Dead;
+        let mut pids = self.pids.write();
+        match pids.get(pid as usize) {
+            Some(PidSlot::Unused) => return Err(HiveError::PidAlreadyFree),
+            None => return Err(HiveError::PidNotFound),
+            Some(PidSlot::Used(mutex)) => {
+                mutex.lock().state = ProcessState::Dead;
+                pids[pid as usize] = PidSlot::Unused;
             }
         }
-        drop(pids);
-        let mut pids = self.pids.write();
-
-        let proc = pids.get_mut(pid as usize).ok_or(HiveError::PidNotFound)?;
-        *proc = PidSlot::Unused;
-        drop(pids);
         Ok(())
     }
 }
