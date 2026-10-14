@@ -57,8 +57,8 @@ impl<S: Read + Seek> Scheduler<S> {
             rsi = in(reg) process.process.context.rsi,
             rdx = in(reg) process.process.context.rdx,
             r10 = in(reg) process.process.context.r10,
-            r8  = in(reg) process.process.context.r9,
-            r9  = in(reg) process.process.context.r8,
+            r8  = in(reg) process.process.context.r8,
+            r9  = in(reg) process.process.context.r9,
             
         );
         Ok(())
