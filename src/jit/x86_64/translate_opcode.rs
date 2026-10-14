@@ -1,6 +1,6 @@
 /*
  * @file            src/jit/x86_64/translate_opcode.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
  * @lastModified    2026-09-30 16:02:58
@@ -1032,7 +1032,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
             TranslatedOpcode(a, b)
         }
         Opcode::Memset { dst, value, size } => {
-            let (a, b) = gen_sched_req(0x16, &[(dst, 1, 8),  (size, 9, 8), (value, 17, 4)], offset);
+            let (a, b) = gen_sched_req(0x16, &[(dst, 1, 8), (size, 9, 8), (value, 17, 4)], offset);
             TranslatedOpcode(a, b)
         }
         Opcode::Memcmp { a, b, size } => {
@@ -1136,7 +1136,11 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
             function,
             args,
         } => {
-            let (a, b) = gen_sched_req(0x72, &[(args, 1, 8), (dst, 9, 8), (function, 17, 4)], offset);
+            let (a, b) = gen_sched_req(
+                0x72,
+                &[(args, 1, 8), (dst, 9, 8), (function, 17, 4)],
+                offset,
+            );
             TranslatedOpcode(a, b)
         }
         Opcode::CallWorker { dst, worker, args } => {

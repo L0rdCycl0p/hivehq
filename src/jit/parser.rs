@@ -1,6 +1,6 @@
 /*
  * @file            src/jit/parser.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
  * @lastModified    2026-09-30 16:01:54
@@ -443,7 +443,11 @@ impl<'a> Parser<'a> {
                 function: self.read_operand()?,
                 args: self.read_operand()?,
             }),
-            0x72 => Ok(Opcode::CallWorker { dst: self.read_operand()?, worker: self.read_operand()?, args: self.read_operand()? }),
+            0x72 => Ok(Opcode::CallWorker {
+                dst: self.read_operand()?,
+                worker: self.read_operand()?,
+                args: self.read_operand()?,
+            }),
             0x73 => Ok(Opcode::NativeCall {
                 function: self.read_operand()?,
                 args: self.read_operand()?,

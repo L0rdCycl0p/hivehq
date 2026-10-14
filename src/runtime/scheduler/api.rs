@@ -1,6 +1,6 @@
 /*
  * @file            src/runtime/scheduler/api.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-27 15:55:31
  * @lastModified    2026-10-14 15:44:54
@@ -28,7 +28,7 @@ use std::os::raw::c_void;
 #[repr(C)]
 pub struct ProcessRequest {
     pub request: ProcessRequestTag,
-    pub params: ProcessRequestParam,   // union, aligned by its most-aligned variant
+    pub params: ProcessRequestParam, // union, aligned by its most-aligned variant
 }
 
 #[repr(u8)]
@@ -162,7 +162,7 @@ pub struct SchedMigrateParam {
 #[derive(Copy, Clone)]
 pub struct MailSendParam {
     pub pid: u32,
-    pub message: MailBody
+    pub message: MailBody,
 }
 
 #[repr(C, packed)]
@@ -188,7 +188,7 @@ pub struct AsyncParam {
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct CallParam {
-    pub args: *const c_void, // ptr
+    pub args: *const c_void,   // ptr
     pub dst: *mut *mut c_void, // ptr
     pub function: u32,
 }

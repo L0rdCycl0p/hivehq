@@ -1,6 +1,6 @@
 /*
  * @file            src/error/mod.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
  * @lastModified    2026-10-14 16:28:10
@@ -91,5 +91,5 @@ pub enum HiveError {
     FunctionLenghtWasCheckedToBeNonZero(u32),
 
     #[error("Null pointer")]
-    NullPointer
+    NullPointer,
 }

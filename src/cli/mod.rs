@@ -1,6 +1,6 @@
 /*
  * @file            src/cli/mod.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 17:35:36
  * @lastModified    2026-09-20 18:44:13

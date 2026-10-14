@@ -43,9 +43,15 @@ use api::ProcessRequest;
 use stack::{Stack, StackRegion};
 
 use crate::{
-    debug::gdb_marker, error::HiveError, jit::jit_function, runtime::{
-        load_exec::{FunctionId, LoadedFunc}, manager::{Manager, PidSlot}, scheduler::{
-            api::{MailBody, ProcessRequestParam, ProcessRequestTag}, context::{HiveContext, swapcontext},
+    debug::gdb_marker,
+    error::HiveError,
+    jit::jit_function,
+    runtime::{
+        load_exec::{FunctionId, LoadedFunc},
+        manager::{Manager, PidSlot},
+        scheduler::{
+            api::{MailBody, ProcessRequestParam, ProcessRequestTag},
+            context::{HiveContext, swapcontext},
         },
     },
 };

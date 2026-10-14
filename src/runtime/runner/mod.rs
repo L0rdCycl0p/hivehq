@@ -1,6 +1,6 @@
 /*
  * @file            src/runtime/runner/mod.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
  * @lastModified    2026-10-14 16:06:34
@@ -80,7 +80,9 @@ pub fn run_with_loaded_file<S: 'static + Read + Seek + Send + Sync>(
         // ------------------------------------------------------------
         // Run
         // ------------------------------------------------------------
-        unsafe {scheduler.scheduler_run()?;}
+        unsafe {
+            scheduler.scheduler_run()?;
+        }
         gdb_marker!(runner_run_with_init_func_end);
         Ok(())
     } else {

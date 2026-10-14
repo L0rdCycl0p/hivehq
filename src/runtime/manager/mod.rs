@@ -32,7 +32,12 @@ use crossbeam::queue::ArrayQueue;
 use parking_lot::{Mutex, RwLock};
 type ProcessRef = Arc<Mutex<ProcessRegistryEntry>>;
 use crate::{
-    error::HiveError, parser::LoadedFile, runtime::{load_exec::ExecPageManager, scheduler::{ProcessRegistryEntry, ProcessState}},
+    error::HiveError,
+    parser::LoadedFile,
+    runtime::{
+        load_exec::ExecPageManager,
+        scheduler::{ProcessRegistryEntry, ProcessState},
+    },
 };
 /// The schedulers shares this struct
 pub struct Manager<S: Read + Seek> {

@@ -1,6 +1,6 @@
 /*
  * @file            src/parser/symbol_table.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
  * @lastModified    2026-09-30 17:46:09

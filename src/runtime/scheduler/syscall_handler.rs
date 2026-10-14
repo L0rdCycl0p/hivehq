@@ -45,25 +45,25 @@ impl<S: Read + Seek> Scheduler<S> {
             // TODO!!!
             let rax_out: u64;
             asm!(
-                    "mov rax, {rax}",
-                    "mov rdi, {rdi}",
-                    "mov rsi, {rsi}",
-                    "mov rdx, {rdx}",
-                    "mov r10, {r10}",
-                    "mov r8, {r8}",
-                    "mov r9, {r9}",
-                    "syscall",
-                    out("rax") rax_out,
-                    out("rcx") _, out("r11") _,
-                    rax = in(reg) process.process.context.rax,
-                    rdi = in(reg) process.process.context.rdi,
-                    rsi = in(reg) process.process.context.rsi,
-                    rdx = in(reg) process.process.context.rdx,
-                    r10 = in(reg) process.process.context.r10,
-                    r8  = in(reg) process.process.context.r8,
-                    r9  = in(reg) process.process.context.r9,
+                "mov rax, {rax}",
+                "mov rdi, {rdi}",
+                "mov rsi, {rsi}",
+                "mov rdx, {rdx}",
+                "mov r10, {r10}",
+                "mov r8, {r8}",
+                "mov r9, {r9}",
+                "syscall",
+                out("rax") rax_out,
+                out("rcx") _, out("r11") _,
+                rax = in(reg) process.process.context.rax,
+                rdi = in(reg) process.process.context.rdi,
+                rsi = in(reg) process.process.context.rsi,
+                rdx = in(reg) process.process.context.rdx,
+                r10 = in(reg) process.process.context.r10,
+                r8  = in(reg) process.process.context.r8,
+                r9  = in(reg) process.process.context.r9,
 
-                );
+            );
             process.process.context.rax = rax_out;
             Ok(())
         }

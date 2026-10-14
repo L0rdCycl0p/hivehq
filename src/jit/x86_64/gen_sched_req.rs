@@ -1,6 +1,6 @@
 /*
  * @file            src/jit/x86_64/gen_sched_req.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
  * @lastModified    2026-09-30 16:02:36
@@ -25,10 +25,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::jit::{
     opcode::{Operand, Register},
-    x86_64::{
-        gen_context_switch::gen_context_switch,
-        gen_load_operand::gen_load_operand,
-    },
+    x86_64::{gen_context_switch::gen_context_switch, gen_load_operand::gen_load_operand},
 };
 
 /// Operand, offset, lenght

@@ -1,6 +1,6 @@
 /*
  * @file            src/runtime/load_exec/mod.rs
- * @description     
+ * @description
  * @author          TrollMii <trollmii@proton.me>
  * @createTime      2026-09-20 15:48:29
  * @lastModified    2026-09-30 16:04:59
@@ -186,7 +186,7 @@ impl ExecPageManager {
     }
     /// Gets a function if it is already loaded into memory via `mmap`
     /// # Errors
-    /// 
+    ///
     pub fn get_func(&mut self, id: FunctionId) -> Result<Arc<LoadedFunc>, HiveError> {
         let index = id.0 as usize;
 
@@ -217,6 +217,7 @@ impl ExecPageManager {
     /// # Errors
     /// - `HiveError::CanNotLoadEmptyFunction`
     pub fn load_func(&mut self, id: FunctionId, code: &[u8]) -> Result<Arc<LoadedFunc>, HiveError> {
+        const JIT_ALIGN: usize = 16;
         let len = code.len();
 
         if len == 0 {
@@ -247,17 +248,15 @@ impl ExecPageManager {
                 continue;
             }
 
-            let amount = available.min(remaining);
-
             page.make_writable()?;
 
-            let dst = unsafe { page.ptr.add(managed.used) };
-
-            unsafe {
-                ptr::copy_nonoverlapping(code.as_ptr().add(code_offset), dst, amount);
+            managed.used = (managed.used + JIT_ALIGN - 1) & !(JIT_ALIGN - 1);
+            let available = PAGE_SIZE - managed.used;
+            if available == 0 {
+                continue;
             }
-
-            managed.used += amount;
+            let amount = available.min(remaining);
+            let dst = unsafe { page.ptr.add(managed.used) };
 
             if function_ptr.is_none() {
                 function_ptr = Some(dst);
