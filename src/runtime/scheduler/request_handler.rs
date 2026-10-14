@@ -161,16 +161,6 @@ impl<S: Read + Seek> Scheduler<S> {
                 }
                 ProcessRequestTag::ProcExit => {
                     let exit_code = param.proc_exit;
-
-                    let i = param.mem_region;
-                    let a = (i.dst as u64).to_le_bytes();
-                    let b = (i.src as u64).to_le_bytes();
-                    let c = (i.dst as u64).to_le_bytes();
-                    let mut result = [0u8; 24];
-
-                    result[0..8].copy_from_slice(&a);
-                    result[8..16].copy_from_slice(&b);
-                    result[16..24].copy_from_slice(&c);
                     let pid = process.pid;
                     drop(process);
                     #[cfg(feature = "cfg_log_proc_exit")]
@@ -178,9 +168,14 @@ impl<S: Read + Seek> Scheduler<S> {
                     self.manager.free_pid(pid)?;
                 }
                 ProcessRequestTag::ProcSelf => {
+                    let dst = param.proc_self as *mut u32;
+                    let pid = process.pid;
                     drop(process);
-                    let param = param.proc_self;
-                    free(param as *mut c_void);
+                    if !dst.is_null() {
+                        unsafe {
+                            *dst = pid;
+                        }
+                    }
                 }
                 ProcessRequestTag::ProcSpawn => {
                     drop(process);

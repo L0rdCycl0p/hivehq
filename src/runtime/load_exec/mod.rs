@@ -257,16 +257,16 @@ impl ExecPageManager {
             }
             let amount = available.min(remaining);
             let dst = unsafe { page.ptr.add(managed.used) };
-
             if function_ptr.is_none() {
                 function_ptr = Some(dst);
             }
-
+            unsafe {
+                ptr::copy_nonoverlapping(code.as_ptr().add(code_offset), dst, amount);
+            }
+            managed.used += amount;
             remaining -= amount;
             code_offset += amount;
-
             page.make_executable()?;
-
             used_pages.push(page);
         }
 
