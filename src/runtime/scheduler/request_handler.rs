@@ -72,7 +72,7 @@ impl<S: Read + Seek> Scheduler<S> {
                     drop(process);
                     let param = param.call_worker;
                     let pid = self.new_process(FunctionId(param.function), param.args)?;
-                    *(param.dst as *mut u32) = pid;
+                    *param.dst.cast::<u32>() = pid;
                 }
                 ProcessRequestTag::Call => {
                     let param = param.call;
@@ -186,7 +186,7 @@ impl<S: Read + Seek> Scheduler<S> {
                     drop(process);
                     let param = param.proc_spawn;
                     let pid = self.new_process(FunctionId(param.function), param.args)?;
-                    *(param.dst as *mut u32) = pid;
+                    *param.dst.cast::<u32>() = pid;
                 }
                 ProcessRequestTag::StackFree => todo!(),
                 ProcessRequestTag::StackAlloc => todo!(),
@@ -194,22 +194,22 @@ impl<S: Read + Seek> Scheduler<S> {
                     drop(process);
                     let param = param.mem_region;
                     memcmp(
-                        param.dst as *mut c_void,
-                        param.src as *mut c_void,
+                        param.dst.cast_mut(),
+                        param.src.cast_mut(),
                         param.size as usize,
                     );
                 }
                 ProcessRequestTag::MemSet => {
                     drop(process);
                     let param = param.memset;
-                    memset(param.dst as *mut c_void, param.value, param.size as usize);
+                    memset(param.dst.cast_mut(), param.value, param.size as usize);
                 }
                 ProcessRequestTag::MemMove => {
                     drop(process);
                     let param = param.mem_region;
                     memmove(
-                        param.dst as *mut c_void,
-                        param.src as *mut c_void,
+                        param.dst.cast_mut(),
+                        param.src.cast_mut(),
                         param.size as usize,
                     );
                 }
@@ -217,8 +217,8 @@ impl<S: Read + Seek> Scheduler<S> {
                     drop(process);
                     let param = param.mem_region;
                     memcpy(
-                        param.dst as *mut c_void,
-                        param.src as *mut c_void,
+                        param.dst.cast_mut(),
+                        param.src.cast_mut(),
                         param.size as usize,
                     );
                 }
@@ -237,14 +237,14 @@ impl<S: Read + Seek> Scheduler<S> {
                 ProcessRequestTag::CAlloc => {
                     drop(process);
                     let param = param.calloc;
-                    let dst_ptr: *mut *mut c_void = param.dst as *mut *mut c_void;
+                    let dst_ptr: *mut *mut c_void = param.dst.cast::<*mut c_void>();
                     let ptr = calloc(param.count as usize, param.size as usize);
                     *dst_ptr = ptr;
                 }
                 ProcessRequestTag::MAlloc => {
                     drop(process);
                     let param = param.malloc;
-                    let dst_ptr: *mut *mut c_void = param.dst as *mut *mut c_void;
+                    let dst_ptr: *mut *mut c_void = param.dst.cast::<*mut c_void>();
                     let ptr = malloc(param.size as usize);
                     *dst_ptr = ptr;
                 }
@@ -257,7 +257,7 @@ impl<S: Read + Seek> Scheduler<S> {
                     drop(process);
                     self.return_function(pid, param as *mut c_void)?;
                 }
-            };
+            }
             Ok(())
         }
     }

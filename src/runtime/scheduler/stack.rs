@@ -50,6 +50,7 @@ pub struct StackRegion {
     pub state: FrameState,
 }
 
+#[derive(PartialEq, Eq, Debug)]
 pub enum FrameState {
     Used(Pid),
     Free,
@@ -176,7 +177,7 @@ impl Stack {
     /// [rsp + 24] = params
     /// ```
     ///
-    /// `rsp` is 16-byte aligned. At least 128 bytes of SysV red zone are
+    /// `rsp` is 16-byte aligned. At least 128 bytes of `SysV` red zone are
     /// reserved above the slots.
     ///
     /// # Safety
