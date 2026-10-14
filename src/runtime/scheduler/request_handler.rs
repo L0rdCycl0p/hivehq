@@ -91,10 +91,14 @@ impl<S: Read + Seek> Scheduler<S> {
                     drop(process);
                 }
                 ProcessRequestTag::MailPeek => {
-                    drop(process);
-                    let param = param.mail_recv;
-                    let _dst = param as *mut MailBody;
-                    todo!();
+                    let dst = param.mail_recv as *mut MailBody;
+                    let msg = process.mailbox.pop();
+                    if let Some(ref m) = msg {
+                        *dst = *m;
+                    }
+                    if let Some(m) = msg {
+                        process.mailbox.push(m);
+                    }
                 }
                 ProcessRequestTag::MailTryRecv => {
                     let param = param.mail_recv;
@@ -189,23 +193,35 @@ impl<S: Read + Seek> Scheduler<S> {
                 ProcessRequestTag::MemCmp => {
                     drop(process);
                     let param = param.mem_region;
-                    memcmp(param.dst as *mut c_void, param.src as *mut c_void, param.size as usize);
-                },
+                    memcmp(
+                        param.dst as *mut c_void,
+                        param.src as *mut c_void,
+                        param.size as usize,
+                    );
+                }
                 ProcessRequestTag::MemSet => {
                     drop(process);
                     let param = param.memset;
                     memset(param.dst as *mut c_void, param.value, param.size as usize);
-                },
+                }
                 ProcessRequestTag::MemMove => {
                     drop(process);
                     let param = param.mem_region;
-                    memmove(param.dst as *mut c_void, param.src as *mut c_void, param.size as usize);
-                },
+                    memmove(
+                        param.dst as *mut c_void,
+                        param.src as *mut c_void,
+                        param.size as usize,
+                    );
+                }
                 ProcessRequestTag::MemCpy => {
                     drop(process);
                     let param = param.mem_region;
-                    memcpy(param.dst as *mut c_void, param.src as *mut c_void, param.size as usize);
-                },
+                    memcpy(
+                        param.dst as *mut c_void,
+                        param.src as *mut c_void,
+                        param.size as usize,
+                    );
+                }
                 ProcessRequestTag::Free => {
                     drop(process);
                     let param = param.free;
