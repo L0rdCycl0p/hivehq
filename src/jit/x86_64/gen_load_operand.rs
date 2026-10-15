@@ -73,8 +73,8 @@ pub fn gen_load_operand(code: &mut Vec<u8>, operand: &Operand, dst_reg: Register
         }
 
         Operand::Memory(memory) => {
-            let base = memory.base.map(|x| encode_register(x));
-            let index = memory.index.map(|x| encode_register(x));
+            let base = memory.base.map(encode_register);
+            let index = memory.index.map(encode_register);
 
             let displacement = memory.displacement;
 

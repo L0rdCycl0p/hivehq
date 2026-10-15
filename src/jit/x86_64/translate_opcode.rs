@@ -122,8 +122,8 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
                 displacement,
             } = src;
 
-            let base = base.map(|x| encode_register(x));
-            let index = index.map(|x| encode_register(x));
+            let base = base.map(encode_register);
+            let index = index.map(encode_register);
 
             let mut code = Vec::new();
 
