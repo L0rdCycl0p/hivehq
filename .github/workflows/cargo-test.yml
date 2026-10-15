@@ -54,4 +54,4 @@ jobs:
         shared-key: "hivehq-rust-cache"
     - name: Run tests
       run: |
-        nix develop --command cargo test --test all --workspace --all-features --locked --verbose -- --nocapture
+        nix develop --command cargo test --all-features --locked --verbose -- --nocapture
