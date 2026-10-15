@@ -65,7 +65,7 @@ pub enum InstructionEncoding {
 pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -> Vec<u8> {
     fn register_value(operand: &Operand) -> u8 {
         match operand {
-            Operand::Register(register) => encode_register(register),
+            Operand::Register(register) => encode_register(*register),
 
             _ => panic!("expected register operand"),
         }
@@ -96,7 +96,7 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
     fn emit_modrm_reg_rm(code: &mut Vec<u8>, reg: u8, operand: &Operand, w: bool, opcode: &[u8]) {
         match operand {
             Operand::Register(register) => {
-                let rm = encode_register(register);
+                let rm = encode_register(*register);
 
                 if let Some(rex) = rex_prefix(w, reg >= 8, false, rm >= 8) {
                     code.push(rex);
@@ -108,9 +108,9 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
             }
 
             Operand::Memory(memory) => {
-                let base = memory.base.as_ref().map(encode_register);
+                let base = memory.base.map(encode_register);
 
-                let index = memory.index.as_ref().map(encode_register);
+                let index = memory.index.map(encode_register);
 
                 let displacement = memory.displacement;
 
@@ -217,7 +217,7 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
 
             match operand {
                 Operand::Register(register) => {
-                    let rm = encode_register(register);
+                    let rm = encode_register(*register);
 
                     if let Some(rex) = rex_prefix(w, false, false, rm >= 8) {
                         code.push(rex);
@@ -259,7 +259,7 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
 
             match destination {
                 Operand::Register(register) => {
-                    let rm = encode_register(register);
+                    let rm = encode_register(*register);
 
                     if let Some(rex) = rex_prefix(w, false, false, rm >= 8) {
                         code.push(rex);

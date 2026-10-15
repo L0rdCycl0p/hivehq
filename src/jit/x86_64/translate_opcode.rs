@@ -31,7 +31,7 @@ use crate::jit::{
     },
 };
 
-pub const fn encode_register(register: &Register) -> u8 {
+pub const fn encode_register(register: Register) -> u8 {
     match register {
         Register::Rax => 0,
         Register::Rcx => 1,
@@ -66,8 +66,8 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
             match (dst, src) {
                 // mov r8, r/m8
                 (Operand::Register(dst), Operand::Register(src)) => {
-                    let dst = encode_register(dst);
-                    let src = encode_register(src);
+                    let dst = encode_register(*dst);
+                    let src = encode_register(*src);
 
                     let mut code = Vec::with_capacity(3);
 
@@ -99,7 +99,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
         }
 
         Opcode::MovImm64 { dst, value } => {
-            let dst = encode_register(dst);
+            let dst = encode_register(*dst);
 
             let mut code = Vec::with_capacity(10);
 
@@ -113,7 +113,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
         }
 
         Opcode::Lea { dst, src } => {
-            let dst = encode_register(dst);
+            let dst = encode_register(*dst);
 
             let MemoryOperand {
                 base,
@@ -122,8 +122,8 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
                 displacement,
             } = src;
 
-            let base = base.map(|x| encode_register(&x));
-            let index = index.map(|x| encode_register(&x));
+            let base = base.map(|x| encode_register(x));
+            let index = index.map(|x| encode_register(x));
 
             let mut code = Vec::new();
 
@@ -399,7 +399,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
         }
         Opcode::Mul { src } => match src {
             Operand::Register(src) => {
-                let src = encode_register(src);
+                let src = encode_register(*src);
 
                 let mut code = Vec::with_capacity(3);
 
@@ -417,7 +417,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Imul { src } => match src {
             Operand::Register(src) => {
-                let src = encode_register(src);
+                let src = encode_register(*src);
 
                 let mut code = Vec::with_capacity(3);
 
@@ -435,7 +435,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Div { src } => match src {
             Operand::Register(src) => {
-                let src = encode_register(src);
+                let src = encode_register(*src);
 
                 let mut code = Vec::with_capacity(3);
 
@@ -453,7 +453,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Idiv { src } => match src {
             Operand::Register(src) => {
-                let src = encode_register(src);
+                let src = encode_register(*src);
 
                 let mut code = Vec::with_capacity(3);
 
@@ -471,7 +471,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Inc { operand } => match operand {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::with_capacity(3);
 
@@ -488,7 +488,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Dec { operand } => match operand {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::with_capacity(3);
 
@@ -505,7 +505,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Neg { operand } => match operand {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::with_capacity(3);
 
@@ -522,7 +522,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Not { operand } => match operand {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::with_capacity(3);
 
@@ -539,7 +539,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Shl { dst, amount } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -567,7 +567,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Shr { dst, amount } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -595,7 +595,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Sar { dst, amount } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -623,7 +623,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Rol { dst, amount } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -651,7 +651,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Ror { dst, amount } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -679,8 +679,8 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Movsx8 { dst, src } => match src {
             Operand::Register(src) => {
-                let dst = encode_register(dst);
-                let src = encode_register(src);
+                let dst = encode_register(*dst);
+                let src = encode_register(*src);
 
                 let mut code = Vec::with_capacity(4);
 
@@ -699,8 +699,8 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Movsx16 { dst, src } => match src {
             Operand::Register(src) => {
-                let dst = encode_register(dst);
-                let src = encode_register(src);
+                let dst = encode_register(*dst);
+                let src = encode_register(*src);
 
                 let mut code = Vec::with_capacity(4);
 
@@ -719,8 +719,8 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Movzx8 { dst, src } => match src {
             Operand::Register(src) => {
-                let dst = encode_register(dst);
-                let src = encode_register(src);
+                let dst = encode_register(*dst);
+                let src = encode_register(*src);
 
                 let mut code = Vec::with_capacity(4);
 
@@ -742,8 +742,8 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Movzx16 { dst, src } => match src {
             Operand::Register(src) => {
-                let dst = encode_register(dst);
-                let src = encode_register(src);
+                let dst = encode_register(*dst);
+                let src = encode_register(*src);
 
                 let mut code = Vec::with_capacity(4);
 
@@ -837,7 +837,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Sete { dst } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -856,7 +856,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Setne { dst } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -875,7 +875,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Setl { dst } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -894,7 +894,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Setle { dst } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -913,7 +913,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Setg { dst } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -932,7 +932,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Setge { dst } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -951,7 +951,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Setb { dst } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 
@@ -970,7 +970,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         Opcode::Seta { dst } => match dst {
             Operand::Register(reg) => {
-                let reg = encode_register(reg);
+                let reg = encode_register(*reg);
 
                 let mut code = Vec::new();
 

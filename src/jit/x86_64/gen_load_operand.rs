@@ -29,12 +29,12 @@ use crate::jit::{
 };
 
 pub fn gen_load_operand(code: &mut Vec<u8>, operand: &Operand, dst_reg: Register) {
-    let dst = encode_register(&dst_reg);
+    let dst = encode_register(dst_reg);
 
     match operand {
         Operand::Register(src) => {
             if *src != dst_reg {
-                let src = encode_register(src);
+                let src = encode_register(*src);
 
                 // REX.W
                 let mut rex = 0x48;
@@ -73,8 +73,8 @@ pub fn gen_load_operand(code: &mut Vec<u8>, operand: &Operand, dst_reg: Register
         }
 
         Operand::Memory(memory) => {
-            let base = memory.base.map(|x| encode_register(&x));
-            let index = memory.index.map(|x| encode_register(&x));
+            let base = memory.base.map(|x| encode_register(x));
+            let index = memory.index.map(|x| encode_register(x));
 
             let displacement = memory.displacement;
 

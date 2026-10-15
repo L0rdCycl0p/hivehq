@@ -23,7 +23,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Opcode {
     Nop,
 
@@ -531,7 +531,7 @@ pub enum Opcode {
     },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Operand {
     Register(Register),
     Immediate(i64),
@@ -560,7 +560,7 @@ pub enum Register {
     R15,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct MemoryOperand {
     pub base: Option<Register>,
     pub index: Option<Register>,
@@ -568,7 +568,7 @@ pub struct MemoryOperand {
     pub displacement: i32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Variable {
     pub id: u32,
 }
@@ -577,7 +577,7 @@ pub struct Type {
     pub id: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ShiftAmount {
     Immediate(u8),
     Cl,
