@@ -99,6 +99,7 @@ impl<S: Read + Seek> Manager<S> {
             Some(PidSlot::Used(mutex)) => {
                 mutex.lock().state = ProcessState::Dead;
                 pids[pid as usize] = PidSlot::Unused;
+                drop(pids);
             }
         }
         Ok(())

@@ -29,18 +29,19 @@ use std::{
 };
 
 use chrono::Local;
+use crossbeam::queue::SegQueue;
 use libc::{calloc, free, malloc, memcmp, memcpy, memmove, memset, realloc};
 use log::info;
 use parking_lot::MutexGuard;
 
 use crate::{
-    debug::gdb_marker,
     error::HiveError,
+    gdb_marker,
     runtime::{
         load_exec::FunctionId,
         scheduler::{
             ProcessRegistryEntry, ProcessState, Scheduler,
-            api::{MailBody, ProcessRequestParam, ProcessRequestTag},
+            api::{MailBody, ProcessRequestTag},
         },
     },
 };
@@ -58,7 +59,6 @@ impl<S: Read + Seek> Scheduler<S> {
             let req = &process.process.request.request;
             let param = process.process.request.params;
 
-            let param: ProcessRequestParam = std::mem::transmute(param);
             gdb_marker!(sched_req_handler_match);
             match req {
                 ProcessRequestTag::Syscall => {
@@ -67,7 +67,9 @@ impl<S: Read + Seek> Scheduler<S> {
                 // YIELD
                 ProcessRequestTag::Recall
                 | ProcessRequestTag::SchedYield
-                | ProcessRequestTag::ProcYield => {}
+                | ProcessRequestTag::ProcYield => {
+                    drop(process);
+                }
                 ProcessRequestTag::CallWorker => {
                     drop(process);
                     let param = param.call_worker;
@@ -80,8 +82,7 @@ impl<S: Read + Seek> Scheduler<S> {
                     drop(process);
                 }
                 ProcessRequestTag::MailClear => {
-                    while process.mailbox.pop().is_some() {} // TODO!!! That can be better
-
+                    process.mailbox = SegQueue::new();
                     drop(process);
                 }
                 ProcessRequestTag::MailLen => {
@@ -99,6 +100,7 @@ impl<S: Read + Seek> Scheduler<S> {
                     if let Some(m) = msg {
                         process.mailbox.push(m);
                     }
+                    drop(process);
                 }
                 ProcessRequestTag::MailTryRecv => {
                     let param = param.mail_recv;
@@ -146,7 +148,7 @@ impl<S: Read + Seek> Scheduler<S> {
                 ProcessRequestTag::ProcSleep => {
                     let start = Local::now().timestamp_micros();
                     let duration = param.proc_sleep;
-                    let end = start + duration as i64;
+                    let end = start + duration;
                     process.state = ProcessState::Sleep { end };
                     drop(process);
                 }
@@ -160,17 +162,17 @@ impl<S: Read + Seek> Scheduler<S> {
                     {}
                 }
                 ProcessRequestTag::ProcExit => {
-                    let exit_code = param.proc_exit;
                     let pid = process.pid;
                     drop(process);
+                    let exit_code = param.proc_exit;
                     #[cfg(feature = "cfg_log_proc_exit")]
                     info!("Process `{pid}` exited with exit code: `{exit_code}`");
                     self.manager.free_pid(pid)?;
                 }
                 ProcessRequestTag::ProcSelf => {
-                    let dst = param.proc_self as *mut u32;
                     let pid = process.pid;
                     drop(process);
+                    let dst = param.proc_self as *mut u32;
                     if !dst.is_null() {
                         *dst = pid;
                     }
@@ -245,9 +247,9 @@ impl<S: Read + Seek> Scheduler<S> {
                 ProcessRequestTag::FrameAlloc => todo!(),
                 ProcessRequestTag::Frame => todo!(),
                 ProcessRequestTag::Ret => {
-                    let param = param.ret;
                     let pid = process.pid;
                     drop(process);
+                    let param = param.ret;
                     self.return_function(pid, param as *mut c_void)?;
                 }
             }

@@ -23,8 +23,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-#[cfg(test)]
-use crate::jit::opcode::{Opcode, Operand, Register};
 use crate::jit::{
     opcode::{self},
     x86_64::translate_opcode::{TranslatedOpcode, translate_opcode},
@@ -46,55 +44,3 @@ pub fn jit_x86_64(code: &[opcode::Opcode]) -> Box<[u8]> {
     }
     jit_code.into_boxed_slice()
 }
-
-#[test]
-fn test_jit() {
-    let opcodes: Box<[Opcode]> = Box::from([
-        Opcode::Nop,
-        Opcode::Mov64 {
-            dst: Operand::Register(Register::Rax),
-            src: Operand::Register(Register::Rbx),
-        },
-        Opcode::Add {
-            dst: Operand::Register(Register::Rax),
-            src: Operand::Register(Register::Rcx),
-        },
-        Opcode::ProcExit {
-            reason: Operand::Register(Register::Rax),
-        },
-    ]);
-    let jit_code = jit_x86_64(&opcodes);
-    for (index, opcode) in jit_code.iter().enumerate() {
-        println!("{opcode:#04x}");
-    }
-}
-/*
-hive asm
-param $0, type
-var $1, type
-mov64 $1, 42
-add $1, $0
-proc.exit 1
-
-asm
-_entry:
-    ;; scheduler_request_ptr = [rsp+0] = rsp
-    ;; scheduler_context_ptr = [rsp+8]
-    ;; process_context_ptr = [rsp+16]
-    ;; swap_context_func_addr = [rsp+24]
-    ;; param0 = [rsp+32]
-    ;; var1 = [rsp+40]
-    ;;
-    mov QWORD PTR [rsp+40], 42
-    add QWORD PTR [rsp+40], QWORD PTR [rsp+32]
-    mov rdi, QWORD PTR [rsp+0]
-    mov BYTE PTR [rdi + 0], 0x22 ;; REQUEST OP
-    mov BYTE PTR [rdi + 1], 0x1 ;; REQUEST PAYLOAD
-
-    mov rdi, QWORD PTR [rsp+16]
-    mov rsi, QWORD PTR [rsp+8]
-    lea rcx, [rel .resume0]
-    jmp context_switch
-.resume0:
-
-*/

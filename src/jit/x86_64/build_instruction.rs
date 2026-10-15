@@ -63,8 +63,6 @@ pub enum InstructionEncoding {
 }
 
 pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -> Vec<u8> {
-    let mut code = Vec::new();
-
     fn register_value(operand: &Operand) -> u8 {
         match operand {
             Operand::Register(register) => encode_register(register),
@@ -72,7 +70,7 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
             _ => panic!("expected register operand"),
         }
     }
-
+    #[allow(clippy::fn_params_excessive_bools)]
     fn rex_prefix(w: bool, r: bool, x: bool, b: bool) -> Option<u8> {
         let mut rex = 0x40;
 
@@ -173,7 +171,7 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
 
                 match mod_bits {
                     0b01 => {
-                        code.push(displacement as i8 as u8);
+                        code.push(displacement as u8);
                     }
 
                     0b10 => {
@@ -201,6 +199,7 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
             }
         }
     }
+    let mut code = Vec::new();
 
     match encoding {
         InstructionEncoding::Rm { opcode, w } => {
@@ -271,7 +270,7 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
 
                         code.push(0xC0 | ((group & 7) << 3) | (rm & 7));
 
-                        code.push(value as i8 as u8);
+                        code.push(value as u8);
                     } else {
                         code.push(opcode32);
 
@@ -297,7 +296,7 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
                     emit_modrm_reg_rm(&mut code, group, destination, w, &[opcode]);
 
                     if (-128..=127).contains(&value) {
-                        code.push(value as i8 as u8);
+                        code.push(value as u8);
                     } else {
                         code.extend_from_slice(&(value as i32).to_le_bytes());
                     }
@@ -332,7 +331,7 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
             emit_modrm_reg_rm(&mut code, group, destination, w, &[opcode]);
 
             if (-128..=127).contains(&value) {
-                code.push(value as i8 as u8);
+                code.push(value as u8);
             } else {
                 code.extend_from_slice(&(value as i32).to_le_bytes());
             }
@@ -401,7 +400,7 @@ pub fn build_instruction(encoding: InstructionEncoding, operands: &[&Operand]) -
             code.push(0xB8 | (dst & 7));
 
             if w {
-                code.extend_from_slice(&(value as u64).to_le_bytes());
+                code.extend_from_slice(&value.cast_unsigned().to_le_bytes());
             } else {
                 code.extend_from_slice(&(value as u32).to_le_bytes());
             }

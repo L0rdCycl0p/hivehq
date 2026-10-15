@@ -49,6 +49,9 @@ pub struct StackRegion {
     pub end: *mut u8,
     pub state: FrameState,
 }
+// SAFETY: StackRegion is only used by `Stack`, which is under a Mutex
+unsafe impl Send for StackRegion {}
+unsafe impl Sync for StackRegion {}
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum FrameState {

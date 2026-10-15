@@ -58,26 +58,6 @@ pub fn gen_context_switch(_offset: usize) -> Vec<u8> {
     code
 }
 
-pub fn patch_context_switches(address: usize, patches: &[ContextSwitchPatch]) {
-    for patch in patches {
-        let patch_address = address + patch.patch_offset;
-        let rip_address = address + patch.rip_offset;
-
-        let next_rip = patch_address + 4;
-
-        let displacement = rip_address as isize - next_rip as isize;
-
-        assert!(
-            i32::try_from(displacement).is_ok(),
-            "RIP-relative displacement does not fit in i32"
-        );
-
-        unsafe {
-            std::ptr::write_unaligned(patch_address as *mut i32, displacement as i32);
-        }
-    }
-}
-
 unsafe extern "C" {
     unsafe fn hive_context_switch();
 }

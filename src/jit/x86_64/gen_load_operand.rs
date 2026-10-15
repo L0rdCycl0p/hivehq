@@ -136,7 +136,7 @@ pub fn gen_load_operand(code: &mut Vec<u8>, operand: &Operand, dst_reg: Register
                 // [index * scale + disp32]
                 code.extend_from_slice(&displacement.to_le_bytes());
             } else if mod_bits == 0b01 {
-                code.push(displacement as i8 as u8);
+                code.push(displacement as u8);
             } else if mod_bits == 0b10 {
                 code.extend_from_slice(&displacement.to_le_bytes());
             }
@@ -174,7 +174,7 @@ pub fn gen_load_operand(code: &mut Vec<u8>, operand: &Operand, dst_reg: Register
             code.push(0x24);
 
             if mod_bits == 0b01 {
-                code.push(displacement as i8 as u8);
+                code.push(displacement as u8);
             } else {
                 code.extend_from_slice(&displacement.to_le_bytes());
             }

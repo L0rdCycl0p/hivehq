@@ -239,10 +239,9 @@ pub union ProcessRequestParam {
     /// `PROC_STATE`
     pub proc_state: ProcPidParam,
 
-    /// `PROC_YIELD`
     /// `PROC_SLEEP`
     /// duration to sleep
-    pub proc_sleep: u64,
+    pub proc_sleep: i64,
 
     /// `PROC_ALIVE`
     pub proc_alive: ProcPidParam,

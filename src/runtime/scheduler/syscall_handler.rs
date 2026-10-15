@@ -37,6 +37,7 @@ use crate::{
 impl<S: Read + Seek> Scheduler<S> {
     /// # Safety
     /// Syscall has to be valid.
+    /// # Errors
     pub unsafe fn handle_syscall(
         &mut self,
         mut process: MutexGuard<'_, ProcessRegistryEntry>,
