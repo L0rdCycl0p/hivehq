@@ -49,7 +49,7 @@ Instead of running on a traditional VM, HIVE focuses on native execution and a m
 
 HIVE is currently in early development.
 
-**Current version: 0.1.6**
+**Current version: 0.1.7**
 
 This release marks the first major milestone after weeks of development and establishes the initial runtime, executable format, process model, and execution infrastructure.
 
