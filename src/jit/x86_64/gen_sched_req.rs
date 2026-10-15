@@ -23,7 +23,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-use chrono::Offset;
 
 use crate::jit::{
     opcode::{Operand, Register}, x86_64::{gen_context_switch::gen_context_switch, gen_load_operand::gen_load_operand, translate_opcode::TranslatedOpcode},
@@ -36,7 +35,7 @@ pub struct RequestPayloadOperand {
     lenght: u8
 }
 impl RequestPayloadOperand {
-    pub fn new(operand: &Operand, offset: u8, lenght: u8) -> Self{
+    pub const fn new(operand: &Operand, offset: u8, lenght: u8) -> Self{
         Self {
             operand: *operand,
             offset,
