@@ -172,9 +172,7 @@ impl<S: Read + Seek> Scheduler<S> {
                     let pid = process.pid;
                     drop(process);
                     if !dst.is_null() {
-                        unsafe {
-                            *dst = pid;
-                        }
+                        *dst = pid;
                     }
                 }
                 ProcessRequestTag::ProcSpawn => {

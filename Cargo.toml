@@ -82,6 +82,13 @@ strip = true
 overflow-checks = false
 codegen-units = 1
 
+[profile.flamegraph]
+inherits = "dev"
+
+opt-level = 3
+debug = "full"
+strip = "none"
+
 [lib]
 name = "hivehq"
 path = "src/lib.rs"

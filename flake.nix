@@ -46,6 +46,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
             clippy
             rustPlatform.rustLibSrc
             nasm
+            perf
           ];
 
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";

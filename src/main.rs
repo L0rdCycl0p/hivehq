@@ -45,7 +45,8 @@ use hivehq::{cli::Cli, error::HiveError, runtime::runner::run_hive_data_stream};
 fn main() -> Result<(), HiveError> {
     cfg_select! {
         feature = "colog" => colog::init(),
-        feature = "env_logger" => env_logger::init()
+        feature = "env_logger" => env_logger::init(),
+        _ => {}
     }
 
     let args = Cli::parse();
