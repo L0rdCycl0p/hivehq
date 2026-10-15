@@ -23,12 +23,27 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+use chrono::Offset;
+
 use crate::jit::{
     opcode::{Operand, Register}, x86_64::{gen_context_switch::gen_context_switch, gen_load_operand::gen_load_operand, translate_opcode::TranslatedOpcode},
 };
 
 /// Operand, offset, lenght
-pub type RequestPayloadOperand<'a> = (&'a Operand, u8, u8);
+pub struct RequestPayloadOperand {
+    operand: Operand,
+    offset: u8,
+    lenght: u8
+}
+impl RequestPayloadOperand {
+    pub fn new(operand: &Operand, offset: u8, lenght: u8) -> Self{
+        Self {
+            operand: *operand,
+            offset,
+            lenght
+        }
+    }
+}
 #[must_use]
 pub fn gen_sched_req(
     req_op: u8,
@@ -61,26 +76,26 @@ pub fn gen_sched_req(
 }
 
 fn gen_request_operand(code: &mut Vec<u8>, request_operand: &RequestPayloadOperand) {
-    match request_operand.2 {
+    match request_operand.lenght {
         1 => {
-            gen_load_operand(code, request_operand.0, Register::Rax);
+            gen_load_operand(code, &request_operand.operand, Register::Rax);
 
             // mov byte ptr [rdi + offset], al
-            code.extend_from_slice(&[0x88, 0x47, request_operand.1]);
+            code.extend_from_slice(&[0x88, 0x47, request_operand.offset]);
         }
 
         4 => {
-            gen_load_operand(code, request_operand.0, Register::Rax);
+            gen_load_operand(code, &request_operand.operand, Register::Rax);
 
             // mov dword ptr [rdi + offset], eax
-            code.extend_from_slice(&[0x89, 0x47, request_operand.1]);
+            code.extend_from_slice(&[0x89, 0x47, request_operand.offset]);
         }
 
         8 => {
-            gen_load_operand(code, request_operand.0, Register::Rax);
+            gen_load_operand(code, &request_operand.operand, Register::Rax);
 
             // mov qword ptr [rdi + offset], rax
-            code.extend_from_slice(&[0x48, 0x89, 0x47, request_operand.1]);
+            code.extend_from_slice(&[0x48, 0x89, 0x47, request_operand.offset]);
         }
 
         length => {
