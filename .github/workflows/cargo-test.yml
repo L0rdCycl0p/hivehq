@@ -1,0 +1,57 @@
+name: Check Tests
+
+on:
+  pull_request:
+    types:
+    - opened
+    - synchronize
+    - reopened
+    - ready_for_review
+    paths-ignore:
+    - '.github/**'
+    - '.vscode/**'
+    - '.gitignore'
+    - '*.md'
+    - 'docs/**'
+    - '.envrc'
+  push:
+    paths-ignore:
+    - '.github/**'
+    - '.vscode/**'
+    - '.gitignore'
+    - '*.md'
+    - 'docs/**'
+    - '.envrc'
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Run test suite
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v7
+
+    - uses: cachix/install-nix-action@v31
+
+    - name: Enable flakes
+      run: |
+        mkdir -p ~/.config/nix
+        echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
+
+    - name: Setup Nix cache
+      uses: DeterminateSystems/magic-nix-cache-action@v14
+
+    - name: Cache Cargo
+      uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+        cache-provider: github
+        cache-ttl: 14
+        shared-key: "hivehq-rust-cache"
+    - name: Run tests
+      run: |
+        nix develop --command cargo test --test all --workspace --all-features --locked --verbose -- --nocapture

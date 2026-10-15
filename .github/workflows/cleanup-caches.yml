@@ -1,0 +1,43 @@
+name: Cleanup Caches
+
+on:
+  schedule:
+  - cron: "0 3 * * 0"
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    name: Remove old caches
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Cleanup caches
+      uses: actions/github-script@v9
+      with:
+        script: |
+          const caches = await github.paginate(
+            github.rest.actions.getActionsCacheList,
+            {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            }
+          );
+
+          const now = Date.now();
+          const maxAge = 14 * 24 * 60 * 60 * 1000;
+
+          for (const cache of caches) {
+            const created = new Date(cache.created_at).getTime();
+
+            if (now - created > maxAge) {
+              core.info(`Deleting ${cache.id}`);
+
+              await github.rest.actions.deleteActionsCacheById({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                cache_id: cache.id
+              });
+            }
+          }

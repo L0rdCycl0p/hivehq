@@ -1,0 +1,34 @@
+name: Check Format
+
+on:
+  pull_request:
+    types:
+    - opened
+    - synchronize
+    - reopened
+    - ready_for_review
+    paths:
+    - '**.rs'
+  push:
+    paths:
+    - '**.rs'
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    name: Check Rust formatting
+    runs-on: ubuntu-latest
+    container:
+      image: rust:latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v7
+
+    - name: Install rustfmt
+      run: rustup component add rustfmt
+
+    - name: Check formatting
+      run: cargo fmt --all --check

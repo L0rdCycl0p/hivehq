@@ -3,16 +3,16 @@ name: License Scan
 on:
   push:
     paths:
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
+    - 'Cargo.toml'
+    - 'Cargo.lock'
+    - '**/Cargo.toml'
+    - '**/Cargo.lock'
   pull_request:
     paths:
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
+    - 'Cargo.toml'
+    - 'Cargo.lock'
+    - '**/Cargo.toml'
+    - '**/Cargo.lock'
   workflow_dispatch:
 jobs:
   feluda:
@@ -20,12 +20,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-      - name: Feluda License Scanner
-        uses: anistark/feluda@v1.17.0
-        with:
-          project-license: GPL-3.0
-          fail-on-incompatible: true
+    - name: Checkout
+      uses: actions/checkout@v7
+    - name: Cache Rust
+      uses: Swatinem/rust-cache@v2
+    - name: Feluda License Scanner
+      uses: anistark/feluda@v1.17.0
+      with:
+        project-license: GPL-3.0
+        fail-on-incompatible: true
