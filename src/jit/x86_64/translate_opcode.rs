@@ -989,8 +989,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
 
         // Hive opcodes
         Opcode::Syscall => {
-            let (a, b) = gen_sched_req(0x76, &[], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x76, &[], offset)
         }
         Opcode::Decl { variable: _, ty: _ } => todo!(),
         Opcode::Param {
@@ -1004,40 +1003,31 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
         } => todo!(),
         Opcode::FrameAlloc { size: _ } => todo!(),
         Opcode::FrameFree => {
-            let (a, b) = gen_sched_req(0x05, &[], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x05, &[], offset)
         }
         Opcode::Malloc { dst, size } => {
-            let (a, b) = gen_sched_req(0x10, &[(dst, 1, 8), (size, 9, 8)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x10, &[(dst, 1, 8), (size, 9, 8)], offset)
         }
         Opcode::Calloc { dst, count, size } => {
-            let (a, b) = gen_sched_req(0x11, &[(dst, 1, 8), (count, 9, 8), (size, 17, 8)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x11, &[(dst, 1, 8), (count, 9, 8), (size, 17, 8)], offset)
         }
         Opcode::Realloc { dst, ptr, size } => {
-            let (a, b) = gen_sched_req(0x12, &[(dst, 1, 8), (ptr, 9, 8), (size, 17, 8)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x12, &[(dst, 1, 8), (ptr, 9, 8), (size, 17, 8)], offset)
         }
         Opcode::Free { ptr } => {
-            let (a, b) = gen_sched_req(0x13, &[(ptr, 1, 8)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x13, &[(ptr, 1, 8)], offset)
         }
         Opcode::Memcpy { dst, src, size } => {
-            let (a, b) = gen_sched_req(0x14, &[(dst, 1, 8), (src, 9, 8), (size, 17, 8)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x14, &[(dst, 1, 8), (src, 9, 8), (size, 17, 8)], offset)
         }
         Opcode::Memmove { dst, src, size } => {
-            let (a, b) = gen_sched_req(0x15, &[(dst, 1, 8), (src, 9, 8), (size, 17, 8)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x15, &[(dst, 1, 8), (src, 9, 8), (size, 17, 8)], offset)
         }
         Opcode::Memset { dst, value, size } => {
-            let (a, b) = gen_sched_req(0x16, &[(dst, 1, 8), (size, 9, 8), (value, 17, 4)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x16, &[(dst, 1, 8), (size, 9, 8), (value, 17, 4)], offset)
         }
         Opcode::Memcmp { a, b, size } => {
-            let (a, b) = gen_sched_req(0x17, &[(a, 1, 8), (b, 9, 8), (size, 17, 8)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x17, &[(a, 1, 8), (b, 9, 8), (size, 17, 8)], offset)
         }
         Opcode::StackAlloc { dst: _, size: _ } => todo!(),
         Opcode::StackFree { ptr: _ } => todo!(),
@@ -1046,60 +1036,47 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
             function,
             args,
         } => {
-            let (a, b) = gen_sched_req(
+            gen_sched_req(
                 0x27,
                 &[(dst, 1, 8), (function, 9, 4), (args, 10, 8)],
                 offset,
-            );
-            TranslatedOpcode(a, b)
+            )
         }
         Opcode::ProcSelf { dst } => {
-            let (a, b) = gen_sched_req(0x21, &[(dst, 1, 8)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x21, &[(dst, 1, 8)], offset)
         }
         Opcode::ProcExit { reason } => {
-            let (a, b) = gen_sched_req(0x22, &[(reason, 1, 1)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x22, &[(reason, 1, 1)], offset)
         }
         Opcode::ProcKill { pid, reason } => {
-            let (a, b) = gen_sched_req(0x23, &[(pid, 1, 4), (reason, 5, 1)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x23, &[(pid, 1, 4), (reason, 5, 1)], offset)
         }
         Opcode::ProcState { dst, pid } => {
-            let (a, b) = gen_sched_req(0x24, &[(dst, 1, 8), (pid, 9, 4)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x24, &[(dst, 1, 8), (pid, 9, 4)], offset)
         }
         Opcode::ProcYield => {
-            let (a, b) = gen_sched_req(0x25, &[], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x25, &[], offset)
         }
         Opcode::ProcSleep { duration } => {
-            let (a, b) = gen_sched_req(0x26, &[(duration, 1, 8)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x26, &[(duration, 1, 8)], offset)
         }
         Opcode::ProcAlive { dst, pid } => {
-            let (a, b) = gen_sched_req(0x27, &[(dst, 1, 8), (pid, 9, 4)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x27, &[(dst, 1, 8), (pid, 9, 4)], offset)
         }
         Opcode::ProcLink { pid } => {
-            let (a, b) = gen_sched_req(0x28, &[(pid, 1, 4)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x28, &[(pid, 1, 4)], offset)
         }
         Opcode::ProcUnlink { pid } => {
-            let (a, b) = gen_sched_req(0x29, &[(pid, 1, 4)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x29, &[(pid, 1, 4)], offset)
         }
         Opcode::ProcMonitor { pid } => {
-            let (a, b) = gen_sched_req(0x2A, &[(pid, 1, 4)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x2A, &[(pid, 1, 4)], offset)
         }
         Opcode::ProcDemonitor { pid } => {
-            let (a, b) = gen_sched_req(0x2B, &[(pid, 1, 4)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x2B, &[(pid, 1, 4)], offset)
         }
         Opcode::SchedYield => {
-            let (a, b) = gen_sched_req(0x30, &[], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x30, &[], offset)
         }
         Opcode::SchedWake { pid: _ } => todo!(),
         Opcode::SchedWait { event: _ } => todo!(),
@@ -1115,8 +1092,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
         Opcode::MailPeek { dst: _ } => todo!(),
         Opcode::MailLen { dst: _ } => todo!(),
         Opcode::MailClear => {
-            let (a, b) = gen_sched_req(0x45, &[], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x45, &[], offset)
         }
         Opcode::Await { operation: _ } => todo!(),
         Opcode::Async {
@@ -1136,16 +1112,14 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
             function,
             args,
         } => {
-            let (a, b) = gen_sched_req(
+            gen_sched_req(
                 0x72,
                 &[(args, 1, 8), (dst, 9, 8), (function, 17, 4)],
                 offset,
-            );
-            TranslatedOpcode(a, b)
+            )
         }
         Opcode::CallWorker { dst, worker, args } => {
-            let (a, b) = gen_sched_req(0x72, &[(args, 1, 8), (dst, 9, 8), (worker, 17, 4)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x72, &[(args, 1, 8), (dst, 9, 8), (worker, 17, 4)], offset)
         }
         Opcode::NativeCall {
             function: _,
@@ -1154,8 +1128,7 @@ pub fn translate_opcode(opcode: &Opcode, offset: usize) -> TranslatedOpcode {
         Opcode::NativeReturn { value: _ } => todo!(),
         Opcode::Recall => todo!(),
         Opcode::Ret { ptr } => {
-            let (a, b) = gen_sched_req(0x77, &[(ptr, 1, 8)], offset);
-            TranslatedOpcode(a, b)
+            gen_sched_req(0x77, &[(ptr, 1, 8)], offset)
         }
     }
 }

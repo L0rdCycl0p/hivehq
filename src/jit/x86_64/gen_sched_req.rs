@@ -24,8 +24,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 use crate::jit::{
-    opcode::{Operand, Register},
-    x86_64::{gen_context_switch::gen_context_switch, gen_load_operand::gen_load_operand},
+    opcode::{Operand, Register}, x86_64::{gen_context_switch::gen_context_switch, gen_load_operand::gen_load_operand, translate_opcode::TranslatedOpcode},
 };
 
 /// Operand, offset, lenght
@@ -35,7 +34,7 @@ pub fn gen_sched_req(
     req_op: u8,
     operands: &[RequestPayloadOperand],
     mut offset: usize,
-) -> (Vec<u8>, usize) {
+) -> TranslatedOpcode {
     let mut code = Vec::new();
 
     // mov rdi, QWORD PTR [rsp + 0]
@@ -58,7 +57,7 @@ pub fn gen_sched_req(
 
     code.extend_from_slice(&context_switch_code);
 
-    (code, offset)
+    TranslatedOpcode(code, offset)
 }
 
 fn gen_request_operand(code: &mut Vec<u8>, request_operand: &RequestPayloadOperand) {
