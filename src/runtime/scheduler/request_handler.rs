@@ -186,13 +186,14 @@ impl<S: Read + Seek> Scheduler<S> {
                 ProcessRequestTag::StackFree => todo!(),
                 ProcessRequestTag::StackAlloc => todo!(),
                 ProcessRequestTag::MemCmp => {
-                    drop(process);
                     let param = param.mem_region;
-                    memcmp(
+                    let result = memcmp(
                         param.dst.cast_mut(),
                         param.src.cast_mut(),
                         param.size as usize,
                     );
+                    process.process.context.rax = result as u64;
+                    drop(process);
                 }
                 ProcessRequestTag::MemSet => {
                     drop(process);
