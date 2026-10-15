@@ -1,8 +1,8 @@
-use hivehq::error::HiveError;
-use hivehq::runtime::scheduler::Scheduler;
-use hivehq::runtime::manager::Manager;
-use hivehq::runtime::load_exec::ExecPageManager;
 use crossbeam::queue::ArrayQueue;
+use hivehq::error::HiveError;
+use hivehq::runtime::load_exec::ExecPageManager;
+use hivehq::runtime::manager::Manager;
+use hivehq::runtime::scheduler::Scheduler;
 use parking_lot::RwLock;
 use std::sync::Arc;
 

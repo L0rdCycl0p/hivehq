@@ -60,11 +60,7 @@ fn jit_code_is_non_empty_for_all_basic_opcodes() {
 /// in the previous review.
 #[test]
 fn jit_function_alignment() {
-    let code = jit_x86_64(&[
-        Opcode::Nop,
-        Opcode::Nop,
-        Opcode::Nop,
-    ]);
+    let code = jit_x86_64(&[Opcode::Nop, Opcode::Nop, Opcode::Nop]);
     // When loaded into an ExecPage, the function should start at a
     // 16-byte aligned offset. This test verifies the raw code length
     // is consistent with the manager's alignment logic.
